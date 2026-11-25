@@ -538,7 +538,7 @@ V["acad-courses"]=()=>{
     ${acadTabs("acad-courses")}
     <div class="card">
       <div class="card-head" style="flex-wrap:wrap"><div class="stack" style="gap:2px"><h3>This week · 24–29 Nov</h3><span class="small muted">${COURSES.length} courses · ${hours} contact hours · ${labs} lab${labs===1?"":"s"}${nx?` · Next: <b style="color:var(--ink)">${esc(nx.c.code)}</b> at ${h12(nx.h)}:00 in ${esc(nx.room)}`:""}</span></div>
-        <div class="segment" role="group" aria-label="Timetable view"><button type="button" data-act="ttview" data-v="week" aria-pressed="${V.ttView==="week"}">Week</button><button type="button" data-act="ttview" data-v="day" aria-pressed="${V.ttView==="day"}">Day</button></div></div>
+        <div class="row wrap" style="justify-content:flex-end"><div class="segment" role="group" aria-label="Timetable view"><button type="button" data-act="ttview" data-v="week" aria-pressed="${V.ttView==="week"}">Week</button><button type="button" data-act="ttview" data-v="day" aria-pressed="${V.ttView==="day"}">Day</button></div><button class="btn sm line" type="button" data-act="ttexport" data-w="current">⤓ Download</button></div></div>
       ${body}
       <p class="small muted">Tap any class for room, instructor, marks and compre details.</p>
     </div>
@@ -634,7 +634,7 @@ V["acad-reg"]=()=>{
         return `<div class="card ${bad?"clashing":""}"><div class="card-head"><b><span class="sw k${ci}b"></span>${esc(c.code)} · ${esc(c.name)}</b>${bad?'<span class="pill bad">Clash</span>':'<span class="small muted">'+c.units+' units'+(c.parts.length>1?" · "+c.parts.map(p=>p.type[0]).join("+"):"")+'</span>'}</div>
         ${c.parts.map(p=>partBlock(c,ci,p)).join("")}</div>`;}).join("")}
     </div><div class="col">
-      <div class="card"><h3>Your week</h3><div class="ttgrid">${grid}</div><p class="small muted">L = lecture, T = tutorial, P = practical. Tutorials and practicals show their section number.</p></div>
+      <div class="card"><div class="card-head"><h3>Your week</h3><button class="btn sm line" type="button" data-act="ttexport" data-w="reg">⤓ Download</button></div><div class="ttgrid">${grid}</div><p class="small muted">L = lecture, T = tutorial, P = practical. Tutorials and practicals show their section number.</p></div>
       ${status}
       <div class="row wrap"><button class="btn" type="button" data-act="regsubmit" ${clashes.length?"disabled":""}>${S.reg.submitted?"Update preferences":"Submit preferences"}</button>${S.reg.submitted?'<button class="btn line" type="button" data-act="regwithdraw">Withdraw</button>':""}</div>
       <p class="small muted">Seat counts and rules are examples. Real allotment would use the institute's priority rules (year, core vs elective, CGPA).</p>
@@ -805,7 +805,65 @@ function route(){
 let lastHash=location.hash;
 window.addEventListener("hashchange",()=>{route();if(location.hash!==lastHash){window.scrollTo(0,0);lastHash=location.hash;}});
 
-/* ================= QR (decorative) ================= */
+/* ================= timetable export (PNG / PDF) ================= */
+function exportBlocks(which){
+  if(which==="reg")return regPicked().flatMap(x=>x.s.map(([d,h])=>({d,h,dur:1,code:x.code,name:REG[x.ci].name,room:x.type+" "+x.key,kind:x.type,color:KCOL[x.ci]})));
+  return weekSlots().map(x=>({d:x.d,h:x.h,dur:x.dur,code:x.c.code,name:x.c.name,room:x.room,kind:x.lab?"Lab":"Lecture",color:CCOL[x.ci]}));
+}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
+function hexA(hex,a){const n=parseInt(hex.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;}
+function fitText(g,t,w){if(g.measureText(t).width<=w)return t;while(t.length>1&&g.measureText(t+"…").width>w)t=t.slice(0,-1);return t+"…";}
+function wrap2(g,t,w){const words=t.split(" ");let l1="";while(words.length&&g.measureText((l1?l1+" ":"")+words[0]).width<=w)l1+=(l1?" ":"")+words.shift();return [l1||fitText(g,words.shift()||"",w),words.length?fitText(g,words.join(" "),w):""];}
+function drawTimetable(which){
+  const blocks=exportBlocks(which),reg=which==="reg";
+  const title=reg?"Semester II 2026–27 · Registration preferences":"Semester I 2026–27 · Weekly timetable";
+  const W=1600,M=56,TC=96,HR=104,HDR=56,top=M+110,cols=6,CW=(W-2*M-TC)/cols,H0=9,H1=15,rows=H1-H0+1;
+  const legend=[...new Map(blocks.map(b=>[b.code,b])).values()];
+  const legRows=Math.ceil(legend.length/2),H=top+HDR+rows*HR+40+legRows*34+70;
+  const cv=document.createElement("canvas"),sc=2;cv.width=W*sc;cv.height=H*sc;const g=cv.getContext("2d");g.scale(sc,sc);
+  const F=(w,s,fam)=>`${w} ${s}px ${fam==="mono"?'"JetBrains Mono", Menlo, monospace':'"Instrument Sans", "Helvetica Neue", Arial, sans-serif'}`;
+  g.fillStyle="#FFFFFF";g.fillRect(0,0,W,H);
+  g.fillStyle="#3438C9";rr(g,M,M,44,44,12);g.fill();g.fillStyle="#fff";g.font=F(800,24);g.textAlign="center";g.textBaseline="middle";g.fillText("C",M+22,M+23);
+  g.textAlign="left";g.textBaseline="alphabetic";g.fillStyle="#14173A";g.font=F(700,30);g.fillText(title,M+60,M+30);
+  g.fillStyle="#5A6083";g.font=F(400,17);g.fillText(`${STUDENT.name} · ${STUDENT.id} · ${STUDENT.prog} · BITS Pilani`,M+60,M+58);
+  const now=new Date();g.textAlign="right";g.font=F(400,14,"mono");g.fillText("Generated "+now.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}),W-M,M+30);g.textAlign="left";
+  const gx=M+TC,gy=top+HDR;
+  DAYS.forEach((d,i)=>{const x=gx+i*CW;g.fillStyle="#F0F1F7";rr(g,x+3,top,CW-6,HDR-10,10);g.fill();g.fillStyle="#14173A";g.font=F(700,18);g.textAlign="center";g.fillText(["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][i],x+CW/2,top+30);g.textAlign="left";});
+  for(let r=0;r<rows;r++){const h=H0+r,y=gy+r*HR;g.fillStyle="#5A6083";g.font=F(600,15,"mono");g.textAlign="right";g.fillText(`${h12(h)}:00 ${h>=12?"PM":"AM"}`,gx-14,y+24);g.textAlign="left";
+    if(h===13){g.fillStyle="#A86200";g.font=F(600,13);g.textAlign="right";g.fillText("Lunch",gx-14,y+44);g.textAlign="left";}
+    for(let c=0;c<cols;c++){const x=gx+c*CW;g.fillStyle=h===13?"#F6F1E6":"#F7F8FC";rr(g,x+3,y+3,CW-6,HR-6,10);g.fill();}}
+  const cell={};blocks.forEach(b=>{for(let k=0;k<b.dur;k++)(cell[b.d+"-"+(b.h+k)]=cell[b.d+"-"+(b.h+k)]||[]).push(b);});
+  const drawn=new Set();
+  blocks.forEach(b=>{const clash=cell[b.d+"-"+b.h].length>1,key=b.d+"-"+b.h;if(clash&&drawn.has(key))return;drawn.add(key);
+    const x=gx+b.d*CW+3,y=gy+(b.h-H0)*HR+3,w=CW-6,h=HR*b.dur-6,pad=12,tw=w-2*pad;
+    if(clash){g.fillStyle="#FCE5E5";rr(g,x,y,w,h,10);g.fill();g.strokeStyle="#CC3434";g.lineWidth=2;g.stroke();g.fillStyle="#CC3434";g.font=F(700,16);g.fillText("Clash",x+pad,y+28);g.font=F(500,14);g.fillText(fitText(g,cell[key].map(z=>z.code).join(" × "),tw),x+pad,y+50);return;}
+    g.fillStyle=hexA(b.color,.14);rr(g,x,y,w,h,10);g.fill();g.strokeStyle=hexA(b.color,.6);g.lineWidth=1.5;g.stroke();
+    g.fillStyle=b.color;rr(g,x,y,6,h,3);g.fill();
+    const e=b.h+b.dur-1;g.fillStyle="#5A6083";g.font=F(400,12,"mono");g.fillText(`${h12(b.h)}:00–${h12(e)}:50`,x+pad,y+20);
+    g.fillStyle="#14173A";g.font=F(700,17);g.fillText(fitText(g,b.code,tw),x+pad,y+42);
+    g.font=F(400,13);if(b.dur>1){const [l1,l2]=wrap2(g,b.name,tw);g.fillText(l1,x+pad,y+60);if(l2)g.fillText(l2,x+pad,y+76);}else g.fillText(fitText(g,b.name,tw),x+pad,y+60);
+    g.fillStyle="#5A6083";g.font=F(500,12);g.fillText(fitText(g,b.room+(b.kind&&!reg?" · "+b.kind:""),tw),x+pad,y+h-10);});
+  let ly=gy+rows*HR+40;g.fillStyle="#14173A";g.font=F(700,16);g.fillText("Courses",M,ly);ly+=14;
+  legend.forEach((b,i)=>{const x=M+(i%2)*((W-2*M)/2),y=ly+Math.floor(i/2)*34+18;g.fillStyle=b.color;rr(g,x,y-12,14,14,4);g.fill();g.fillStyle="#14173A";g.font=F(700,15);g.fillText(b.code,x+24,y);const cw=g.measureText(b.code).width;g.fillStyle="#5A6083";g.font=F(400,15);
+    const c=COURSES.find(z=>z.code===b.code);g.fillText(" · "+b.name+(c?" · "+c.ic:""),x+24+cw,y);});
+  g.fillStyle="#8A8FAE";g.font=F(400,12);g.fillText("Clocktower prototype · sample data, not an official BITS document",M,H-28);
+  return cv;
+}
+function loadJsPDF(){if(window.jspdf)return Promise.resolve(window.jspdf.jsPDF);return new Promise((res,rej)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";s.onload=()=>window.jspdf?res(window.jspdf.jsPDF):rej(new Error("PDF library did not load"));s.onerror=()=>rej(new Error("PDF library could not load. Check your internet connection."));document.head.appendChild(s);});}
+function saveBlob(blob,name){const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}
+function openExport(which){
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>showExport(which));else showExport(which);
+}
+let EXP=null;
+function showExport(which){
+  const cv=drawTimetable(which),url=cv.toDataURL("image/png"),base=which==="reg"?"clocktower-sem2-registration":"clocktower-sem1-timetable";
+  EXP={cv,url,base,which};
+  modal(`<div class="modal-head"><h2>Download timetable</h2><button class="x" type="button" data-act="close" aria-label="Close">✕</button></div>
+    <img src="${url}" alt="Timetable preview" style="width:100%;border:1px solid var(--line);border-radius:10px;background:#fff">
+    <div class="row wrap" style="justify-content:flex-start"><button class="btn" type="button" data-act="expng">Download image (PNG)</button><button class="btn ghost" type="button" data-act="expdf">Download PDF</button></div>
+    <p class="small muted">The PDF is A4 landscape, ready to print. If your browser blocks the download, right-click the preview and choose "Save image as…".</p>`);
+  const m=document.querySelector("#overlay .modal");if(m)m.style.width="min(980px,100%)";
+}
 function drawQR(cv,seed){if(!cv)return;const x=cv.getContext("2d"),n=25,s=cv.width/n;let h=0;for(const ch of seed)h=(h*31+ch.charCodeAt(0))>>>0;
   x.fillStyle="#fff";x.fillRect(0,0,cv.width,cv.height);x.fillStyle="#111";
   const rnd=()=>{h^=h<<13;h>>>=0;h^=h>>17;h^=h<<5;h>>>=0;return h/4294967296;};
@@ -875,6 +933,10 @@ const A={
   msgic(d){modal(`<div class="modal-head"><h2>Message ${esc(d.c)} IC</h2><button class="x" type="button" data-act="close" aria-label="Close">✕</button></div><form class="form" data-form="msg"><label class="field">Message<textarea id="msgText" required placeholder="Your question"></textarea></label><button class="btn" type="submit">Send</button></form>`);},
   setcalc(d){S.calcCourse=d.c;save();},
   ttview(d){V.ttView=d.v;route();},
+  ttexport(d){openExport(d.w);},
+  expng(){if(!EXP)return;EXP.cv.toBlob(b=>{saveBlob(b,EXP.base+".png");toast("Image downloaded: "+EXP.base+".png");},"image/png");},
+  expdf(el){if(!EXP)return;toast("Preparing PDF…");loadJsPDF().then(jsPDF=>{const pdf=new jsPDF({orientation:"landscape",unit:"mm",format:"a4"});const pw=297,ph=210,m=8,r=EXP.cv.height/EXP.cv.width;let w=pw-2*m,h=w*r;if(h>ph-2*m){h=ph-2*m;w=h/r;}
+    pdf.setProperties({title:EXP.which==="reg"?"Clocktower registration preferences":"Clocktower weekly timetable"});pdf.addImage(EXP.url,"PNG",(pw-w)/2,(ph-h)/2,w,h);saveBlob(pdf.output("blob"),EXP.base+".pdf");toast("PDF downloaded: "+EXP.base+".pdf");}).catch(err=>toast(err.message));},
   ttday(d){V.ttDay=+d.d;route();},
   slot(d){const x=weekSlots().find(s=>s.c.code===d.c&&s.d===+d.d&&s.h===+d.h);if(!x)return;const c=x.c,p=Math.round(scored(c)/maxSoFar(c)*100),st=slotState(x);
     modal(`<div class="modal-head"><div class="stack" style="gap:2px"><span class="eyebrow" style="display:flex;gap:6px;align-items:center"><i class="cdot" style="--c:${CCOL[x.ci]}"></i>${esc(c.code)} · Section ${esc(c.sec)} · ${x.lab?"Lab":"Lecture"}</span><h2>${esc(c.name)}</h2></div><button class="x" type="button" data-act="close" aria-label="Close">✕</button></div>
