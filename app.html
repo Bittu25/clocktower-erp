@@ -287,6 +287,12 @@ tr:last-child td{border-bottom:0}
 .gbtn{display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:12px;font-weight:700}
 .gdot{width:18px;height:18px;border-radius:50%;background:conic-gradient(#EA4335 0 25%,#FBBC05 0 50%,#34A853 0 75%,#4285F4 0)}
 
+/* sun / moon theme switch: only one icon shows at a time */
+.themebtn{margin-left:auto;color:var(--ink)}
+.ti-sun{display:none;color:var(--marigold)}
+:root[data-theme="dark"] .ti-sun{display:block}
+:root[data-theme="dark"] .ti-moon{display:none}
+.themeicons{width:28px;height:28px;border-radius:8px;background:var(--sunk);display:grid;place-items:center;flex:none}
 /* collapsible sidebar */
 .brand{position:relative}
 .collapse-btn{margin-left:auto;width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--muted);display:grid;place-items:center;flex:none}
@@ -360,7 +366,7 @@ tr:last-child td{border-bottom:0}
     <a class="navlink" href="#wallet" data-tab="wallet" title="Wallet"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M16 12h2"/><path d="M3 10h18"/></svg><span class="lbl">Wallet</span></a>
     <a class="navlink" href="#inbox" data-tab="inbox" title="Inbox"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v11H8l-4 4z"/></svg><span class="lbl">Inbox</span><span class="count" data-inbox-count></span></a>
     <div class="side-foot">
-      <button class="toggle" type="button" data-act="theme" title="Switch theme"><span class="knob" aria-hidden="true"></span><span class="tl" data-theme-label>Dark mode</span></button>
+      <button class="toggle" type="button" data-act="theme" data-theme-btn title="Switch theme"><span class="themeicons"><svg class="ti-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><svg class="ti-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span><span class="tl" data-theme-label>Dark mode</span></button>
       <a class="navlink" href="index.html" title="Design notes"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/></svg><span class="lbl">Design notes</span></a>
       <button class="me" type="button" data-act="profile"><span class="avatar">AM</span><span class="lbl"><b>Aarav Mehta</b><span>2023A7PS0412P</span></span></button>
     </div>
@@ -369,9 +375,9 @@ tr:last-child td{border-bottom:0}
   <div class="main-col">
     <div class="demo-strip">Prototype with sample data. Nothing here connects to real BITS systems or moves real money.</div>
     <header class="top">
-      <span class="mbrand"><span class="brand-mark">C</span>Clocktower</span>
+      <span class="mbrand" aria-label="Clocktower"><span class="brand-mark">C</span></span>
       <button class="searchbtn" type="button" data-act="palette" aria-label="Search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span>Search<span class="lbl-long"> courses, rooms, requests…</span></span><kbd>⌘K</kbd></button>
-      <button class="toggle" type="button" data-act="theme" aria-label="Switch theme"><span class="knob" aria-hidden="true"></span><span class="tl" data-theme-label>Dark mode</span></button>
+      <button class="iconbtn themebtn" type="button" data-act="theme" data-theme-btn aria-label="Switch to dark mode" title="Switch to dark mode"><svg class="ti-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><svg class="ti-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
       <a class="iconbtn" href="#inbox" aria-label="Inbox"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v11H8l-4 4z"/></svg><span class="dot" data-inbox-count></span></a>
     </header>
     <main id="main" tabindex="-1"></main>
@@ -814,6 +820,7 @@ function route(){
   document.documentElement.setAttribute("data-theme",S.theme);
   const sh=document.querySelector(".shell"),cb=document.querySelector(".collapse-btn");sh.classList.toggle("collapsed",S.side==="collapsed");if(cb){const c=S.side==="collapsed";cb.setAttribute("aria-label",c?"Expand sidebar":"Collapse sidebar");cb.title=(c?"Expand":"Collapse")+" sidebar (⌘\\)";cb.setAttribute("aria-expanded",String(!c));}
   $$("[data-theme-label]").forEach(e=>e.textContent=S.theme==="dark"?"Light mode":"Dark mode");
+  $$("[data-theme-btn]").forEach(b=>{const t=S.theme==="dark"?"Switch to light mode":"Switch to dark mode";b.setAttribute("aria-label",t);b.title=t;});
   $("#signin").hidden=S.signedIn;
   const h=(location.hash||"#today").slice(1);
   let html,tab;
