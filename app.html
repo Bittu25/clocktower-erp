@@ -236,6 +236,15 @@ tr:last-child td{border-bottom:0}
 .nexttag,.donetag{font-family:var(--body);font-size:.64rem;border-radius:999px;padding:0 7px}
 .nexttag{background:var(--accent);color:var(--accent-ink)}
 .donetag{background:var(--sunk);color:var(--muted)}
+/* Day picker: one row of six equal date chips, never wraps */
+.daystrip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.daystrip button{position:relative;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 2px;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0}
+.daystrip .dn{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.daystrip .dd{font-family:var(--display);font-size:1.15rem;font-weight:700;line-height:1.1}
+.daystrip button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.daystrip button[aria-pressed="true"] .dn{color:inherit;opacity:.85}
+.todaydot{position:absolute;bottom:4px;width:4px;height:4px;border-radius:50%;background:var(--accent)}
+.daystrip button[aria-pressed="true"] .todaydot{background:var(--accent-ink)}
 .tt-daylist{display:flex;flex-direction:column;gap:10px}
 .tt-dayrow{display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;align-items:stretch}
 .tt-dayrow .time{width:auto;padding-top:8px}
@@ -561,7 +570,7 @@ V["acad-courses"]=()=>{
     body=`<div class="tablewrap"><div class="tt">${g}</div></div>`;
   }else{
     const ds=slots.filter(x=>x.d===V.ttDay);
-    body=`<div class="segment" role="group" aria-label="Day">${DAYS.map((d,i)=>`<button type="button" data-act="ttday" data-d="${i}" aria-pressed="${i===V.ttDay}">${d} <span class="small" style="opacity:.75">${WEEKDATES[i].split(" ")[0]}</span></button>`).join("")}</div>
+    body=`<div class="daystrip" role="group" aria-label="Day">${DAYS.map((d,i)=>`<button type="button" data-act="ttday" data-d="${i}" aria-pressed="${i===V.ttDay}" aria-label="${d} ${WEEKDATES[i]}${i===TODAY_IDX?", today":""}"><span class="dn">${d}</span><span class="dd">${WEEKDATES[i].split(" ")[0]}</span>${i===TODAY_IDX?'<i class="todaydot"></i>':""}</button>`).join("")}</div>
       ${ds.length?`<div class="tt-daylist">${ds.map(x=>`<div class="tt-dayrow"><span class="time">${h12(x.h)}:00<br><span class="small">${x.h>=12?"PM":"AM"}</span></span>${slotBlock(x,false)}</div>`).join("")}</div>`:'<div class="empty">No classes on this day.</div>'}`;
   }
   return `<div class="page"><div class="page-head"><div class="stack"><span class="eyebrow">Semester I · 2026–27</span><h1>Academics</h1></div><button class="btn ghost sm" type="button" data-act="ics">Add to my calendar</button></div>
