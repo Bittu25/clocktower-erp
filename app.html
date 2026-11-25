@@ -192,6 +192,11 @@ tr:last-child td{border-bottom:0}
 .secbtns button[aria-pressed="true"].has-clash{box-shadow:0 0 0 3px var(--bad)}
 .secbtns button[aria-pressed="true"] .fit.ok{background:rgba(255,255,255,.9);color:#16693f}
 .secbtns button[aria-pressed="true"] .fit.no{background:#fff;color:#b02020}
+.part-head{display:flex;justify-content:space-between;gap:8px;font-size:.86rem;border-top:1px solid var(--line);padding-top:10px}
+.part-head:first-of-type{border-top:0;padding-top:0}
+.secbtns button.full{opacity:.55;cursor:not-allowed}
+.secbtns .fit.full{background:var(--sunk);color:var(--muted)}
+.morebtn{align-self:flex-start;border:0;background:none;color:var(--accent);font-weight:700;padding:2px 0;font-size:.88rem}
 .card.clashing{border-color:var(--bad);box-shadow:0 0 0 1px var(--bad)}
 .clashnote{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--bad-soft);color:var(--bad);border-radius:10px;padding:9px 12px;font-size:.88rem}
 .ttgrid .cell.clash{font-size:.62rem}
@@ -410,12 +415,20 @@ const PS_STATIONS=[
   {id:"p4",city:"Gurugram",field:"E-commerce · data analytics",seats:12,cut:7.9,rating:3.9,stipend:"Yes"},
   {id:"p5",city:"Pilani",field:"Research lab · electronics",seats:6,cut:7.2,rating:4.4,stipend:"No"}
 ];
+/* Each course has one or more components (Lecture, Tutorial, Practical); students pick one section of each. seats 0 = full. */
 const REG=[
-  {code:"CS F363",name:"Compiler Construction",secs:{L1:[[0,10],[2,10],[4,10]],L2:[[1,11],[3,11],[5,11]]},seats:{L1:12,L2:31},units:4},
-  {code:"CS F364",name:"Design & Analysis of Algorithms",secs:{L1:[[0,10],[2,10],[4,10]],L2:[[1,14],[3,14],[5,9]]},seats:{L1:5,L2:40},units:3},
-  {code:"CS F372",name:"Operating Systems",secs:{L1:[[0,12],[2,12],[4,12]],L2:[[1,10],[3,10],[5,10]]},seats:{L1:22,L2:18},units:4},
-  {code:"HSS",name:"Humanities elective",secs:{L1:[[1,14],[3,14]],L2:[[0,15],[2,15]]},seats:{L1:9,L2:26},units:3}
+  {code:"CS F363",name:"Compiler Construction",units:4,parts:[
+    {type:"Lecture",secs:{L1:{s:[[0,10],[2,10],[4,10]],seats:12},L2:{s:[[1,11],[3,11],[5,11]],seats:31}}}]},
+  {code:"CS F364",name:"Design & Analysis of Algorithms",units:3,parts:[
+    {type:"Lecture",secs:{L1:{s:[[0,10],[2,10],[4,10]],seats:5},L2:{s:[[1,14],[3,14],[5,9]],seats:40}}},
+    {type:"Tutorial",secs:{T1:{s:[[0,11]],seats:8},T2:{s:[[1,9]],seats:14},T3:{s:[[2,11]],seats:0},T4:{s:[[3,12]],seats:11},T5:{s:[[4,11]],seats:20}}}]},
+  {code:"CS F372",name:"Operating Systems",units:4,parts:[
+    {type:"Lecture",secs:{L1:{s:[[0,12],[2,12],[4,12]],seats:22},L2:{s:[[1,10],[3,10],[5,10]],seats:18},L3:{s:[[0,15],[2,15],[4,15]],seats:0}}},
+    {type:"Practical",secs:{P1:{s:[[0,14]],seats:6},P2:{s:[[1,15]],seats:12},P3:{s:[[2,14]],seats:3},P4:{s:[[3,15]],seats:9},P5:{s:[[4,14]],seats:15},P6:{s:[[5,11]],seats:7},P7:{s:[[5,12]],seats:0}}}]},
+  {code:"HSS",name:"Humanities elective",units:3,parts:[
+    {type:"Lecture",secs:{L1:{s:[[1,14],[3,14]],seats:9},L2:{s:[[0,15],[2,15]],seats:26}}}]}
 ];
+function defaultPicks(){return{"CS F363":{Lecture:"L1"},"CS F364":{Lecture:"L1",Tutorial:"T1"},"CS F372":{Lecture:"L1",Practical:"P1"},"HSS":{Lecture:"L1"}};}
 const REQ_TEMPLATES={
   bonafide:{label:"Bonafide certificate",steps:[["Requested","You"],["Details verified","SWD office"],["Awaiting signature","Associate Dean, SWD"],["Ready","Signed PDF here and in DigiLocker"]],eta:"Usually 2 working days"},
   transcript:{label:"Official transcript",steps:[["Requested","You"],["Fee received","Accounts"],["Prepared and checked","Academic office (ARC)"],["Sent","Sealed copy posted, PDF here"]],eta:"Usually 5 working days"},
@@ -433,12 +446,13 @@ function defaults(){return{
     {id:"r103",type:"makeup",title:"Makeup exam · CS F303 Quiz 2",detail:"Medical certificate attached",at:1,log:["Tue 25 Nov, 9:30 AM"],notes:[]},
     {id:"r104",type:"complaint",title:"Fan not working · Room 2147",detail:"Electrical",at:4,log:["Fri 21 Nov, 7:40 PM","Fri 21 Nov, 8:05 PM","Sat 22 Nov, 9:00 AM","Sat 22 Nov, 10:15 AM"],notes:[]}
   ],
-  reg:{picks:{"CS F363":"L1","CS F364":"L1","CS F372":"L1","HSS":"L1"},submitted:false},
+  reg:{picks:defaultPicks(),submitted:false,fitOnly:false},
   ps:PS_STATIONS.map(s=>s.id),psSaved:false,
   rsvp:{},grubs:{},seen:{},rating:{},calcCourse:"CS F301",calcTarget:"A-",mutes:{},parentAccess:true,seq:105
 };}
 let S;
 try{S=Object.assign(defaults(),JSON.parse(localStorage.getItem("clocktower-app")||"{}"));}catch(e){S=defaults();}
+if(!S.reg||!S.reg.picks||typeof S.reg.picks["CS F363"]!=="object")S.reg=defaults().reg;
 function save(){try{localStorage.setItem("clocktower-app",JSON.stringify(S));}catch(e){}}
 
 /* ================= helpers ================= */
@@ -548,28 +562,52 @@ V.course=(s)=>{
       <div class="card"><h3>Course materials</h3><div class="list"><div class="li nolead"><span>Handout (PDF)</span><span class="pill plain">Sample</span></div><div class="li nolead"><span>Lecture slides</span><span class="pill plain">Sample</span></div></div></div>
     </div></div></div>`;
 };
+const SHOW_MAX=4;
+function regPicked(){const out=[];REG.forEach((c,ci)=>c.parts.forEach(p=>{const k=S.reg.picks[c.code][p.type];if(k&&p.secs[k])out.push({ci,code:c.code,type:p.type,key:k,s:p.secs[k].s});}));return out;}
 V["acad-reg"]=()=>{
-  const occ={};REG.forEach((c,ci)=>c.secs[S.reg.picks[c.code]].forEach(([d,h])=>{(occ[d+"-"+h]=occ[d+"-"+h]||[]).push(ci);}));
+  if(!V.regOpen)V.regOpen={};
+  const picked=regPicked(),occ={};
+  picked.forEach(x=>x.s.forEach(([d,h])=>{(occ[d+"-"+h]=occ[d+"-"+h]||[]).push(x);}));
   const clashes=Object.entries(occ).filter(([k,v])=>v.length>1);
+  const lab=x=>x.code.split(" ").pop()+(x.type==="Lecture"?"":" "+x.key);
   let grid='<div></div>'+DAYS.map(d=>`<div>${d}</div>`).join("");
-  for(let h=9;h<=15;h++){grid+=`<div>${h>12?h-12:h}${h>=12?"p":"a"}</div>`+DAYS.map((d,di)=>{const o=occ[di+"-"+h];return !o?'<div class="cell"></div>':o.length>1?`<div class="cell clash" title="Clash: ${o.map(i=>REG[i].code).join(" and ")}">${o.map(i=>REG[i].code.split(" ").pop()).join(" × ")}</div>`:`<div class="cell k${o[0]}">${REG[o[0]].code.split(" ").pop()}</div>`;}).join("");}
+  for(let h=9;h<=15;h++){grid+=`<div>${h>12?h-12:h}${h>=12?"p":"a"}</div>`+DAYS.map((d,di)=>{const o=occ[di+"-"+h];return !o?'<div class="cell"></div>':o.length>1?`<div class="cell clash" title="Clash: ${o.map(x=>x.code+" "+x.key).join(" and ")}">${o.map(lab).join(" × ")}</div>`:`<div class="cell k${o[0].ci}" title="${esc(o[0].code)} ${o[0].key}">${lab(o[0])}</div>`;}).join("");}
   const slotTxt=list=>{const byH={};list.forEach(([d,h])=>{(byH[h]=byH[h]||[]).push(DAYS[d]);});return Object.entries(byH).map(([h,ds])=>ds.join(", ")+" "+h12(+h)+(+h>=12?" PM":" AM")).join("; ");};
-  const conflictsFor=(ci,key)=>{const mine=REG[ci].secs[key],out=[];REG.forEach((o,oi)=>{if(oi===ci)return;const os=o.secs[S.reg.picks[o.code]];const hits=mine.filter(([d,h])=>os.some(([d2,h2])=>d2===d&&h2===h));if(hits.length)out.push({code:o.code,hits});});return out;};
+  /* who would this section clash with, given everything else currently picked */
+  const conflictsFor=(code,type,slots)=>{const out=[];picked.forEach(x=>{if(x.code===code&&x.type===type)return;const hits=slots.filter(([d,h])=>x.s.some(([d2,h2])=>d2===d&&h2===h));if(hits.length)out.push(x.code===code?x.type.toLowerCase()+" "+x.key:x.code);});return [...new Set(out)];};
   const units=REG.reduce((a,c)=>a+c.units,0);
   let status;
   if(S.reg.submitted)status=`<div class="status ok">Preferences submitted. Allotment results on 10 Dec. You can still change them until 8 Dec.</div>`;
-  else if(clashes.length){const names=[...new Set(clashes.flatMap(c=>c[1]))].map(i=>REG[i].code).join(" and ");status=`<div class="status no">Clash between ${names} on ${clashes.map(c=>{const [d,h]=c[0].split("-");return DAYS[d]+" "+hr(+h);}).join(", ")}. Switch a section to submit.</div>`;}
+  else if(clashes.length){const names=[...new Set(clashes.flatMap(c=>c[1].map(x=>x.code+(x.type==="Lecture"?"":" "+x.key))))].join(" and ");status=`<div class="status no">Clash between ${esc(names)} on ${clashes.map(c=>{const [d,h]=c[0].split("-");return DAYS[d]+" "+hr(+h);}).join(", ")}. Switch a section to submit.</div>`;}
   else status=`<div class="status ok">No clashes. ${REG.length} courses · ${units} units. Ready to submit.</div>`;
+
+  const tile=(c,ci,p,k)=>{const sec=p.secs[k],on=S.reg.picks[c.code][p.type]===k,full=sec.seats===0&&!on,cf=conflictsFor(c.code,p.type,sec.s);
+    return `<button type="button" class="${cf.length?"has-clash":""} ${full?"full":""}" data-act="pick" data-c="${esc(c.code)}" data-t="${p.type}" data-s="${k}" aria-pressed="${on}" ${full?"disabled":""} style="${on?"background:"+KCOL[ci]:""}">
+      <span class="sec-top"><b>${k}</b><span>${sec.seats?sec.seats+" seats left":"Full"}</span></span><span class="sec-time">${slotTxt(sec.s)}</span>
+      <span class="fit ${full?"full":cf.length?"no":"ok"}">${full?"Full · waitlist opens 9 Dec":cf.length?"✕ Clashes with "+cf.map(esc).join(", "):"✓ No clash"}</span></button>`;};
+
+  const partBlock=(c,ci,p)=>{
+    const keys=Object.keys(p.secs),cur=S.reg.picks[c.code][p.type],openKey=c.code+"|"+p.type,open=V.regOpen[openKey];
+    let shown=keys;
+    if(S.reg.fitOnly)shown=shown.filter(k=>k===cur||(p.secs[k].seats>0&&!conflictsFor(c.code,p.type,p.secs[k].s).length));
+    const hiddenByFilter=keys.length-shown.length;
+    let collapsed=0;
+    if(!open&&shown.length>SHOW_MAX){const keep=shown.slice(0,SHOW_MAX);if(!keep.includes(cur)){keep[SHOW_MAX-1]=cur;}collapsed=shown.length-keep.length;shown=shown.filter(k=>keep.includes(k));}
+    const multi=c.parts.length>1;
+    return `${multi||keys.length>2?`<div class="part-head"><span><b>${p.type}</b> · pick 1 of ${keys.length}</span>${cur?`<span class="small muted">Chosen: ${cur}</span>`:""}</div>`:""}
+      <div class="secbtns">${shown.map(k=>tile(c,ci,p,k)).join("")}</div>
+      ${collapsed?`<button class="morebtn" type="button" data-act="regmore" data-k="${esc(openKey)}">Show all ${keys.length-(S.reg.fitOnly?hiddenByFilter:0)} ${p.type.toLowerCase()} sections</button>`:open&&shown.length>SHOW_MAX?`<button class="morebtn" type="button" data-act="regmore" data-k="${esc(openKey)}">Show fewer</button>`:""}
+      ${S.reg.fitOnly&&hiddenByFilter?`<span class="small muted">${hiddenByFilter} section${hiddenByFilter>1?"s":""} hidden because ${hiddenByFilter>1?"they clash or are":"it clashes or is"} full.</span>`:""}`;};
+
   return `<div class="page"><div class="page-head"><div class="stack"><span class="eyebrow">Semester II · 2026–27</span><h1>Registration cart</h1><p>Window 2–8 Dec. Everyone who submits in the window is allotted together. Clicking first gives no advantage.</p></div></div>
     ${acadTabs("acad-reg")}
     <div class="grid2"><div class="col">
-      ${REG.map((c,ci)=>{const pick=S.reg.picks[c.code],cur=conflictsFor(ci,pick);
-        return `<div class="card ${cur.length?"clashing":""}"><div class="card-head"><b><span class="sw k${ci}b"></span>${esc(c.code)} · ${esc(c.name)}</b>${cur.length?'<span class="pill bad">Clash</span>':'<span class="small muted">'+c.units+' units</span>'}</div>
-        <div class="secbtns">${Object.keys(c.secs).map(k=>{const on=pick===k,cf=on?cur:conflictsFor(ci,k);
-          return `<button type="button" class="${cf.length?"has-clash":""}" data-act="pick" data-c="${esc(c.code)}" data-s="${k}" aria-pressed="${on}" style="${on?"background:"+KCOL[ci]:""}"><span class="sec-top"><b>Section ${k}</b><span>${c.seats[k]} seats left</span></span><span class="sec-time">${slotTxt(c.secs[k])}</span>
-            <span class="fit ${cf.length?"no":"ok"}">${cf.length?"✕ Clashes with "+cf.map(x=>esc(x.code)).join(", "):"✓ No clash"}</span></button>`;}).join("")}</div></div>`;}).join("")}
+      <label class="check card" style="flex-direction:row;padding:12px 16px"><input type="checkbox" id="fitOnly" data-change="fitonly" ${S.reg.fitOnly?"checked":""}> Only show sections that fit my timetable</label>
+      ${REG.map((c,ci)=>{const bad=c.parts.some(p=>{const k=S.reg.picks[c.code][p.type];return k&&conflictsFor(c.code,p.type,p.secs[k].s).length;});
+        return `<div class="card ${bad?"clashing":""}"><div class="card-head"><b><span class="sw k${ci}b"></span>${esc(c.code)} · ${esc(c.name)}</b>${bad?'<span class="pill bad">Clash</span>':'<span class="small muted">'+c.units+' units'+(c.parts.length>1?" · "+c.parts.map(p=>p.type[0]).join("+"):"")+'</span>'}</div>
+        ${c.parts.map(p=>partBlock(c,ci,p)).join("")}</div>`;}).join("")}
     </div><div class="col">
-      <div class="card"><h3>Your week</h3><div class="ttgrid">${grid}</div></div>
+      <div class="card"><h3>Your week</h3><div class="ttgrid">${grid}</div><p class="small muted">L = lecture, T = tutorial, P = practical. Tutorials and practicals show their section number.</p></div>
       ${status}
       <div class="row wrap"><button class="btn" type="button" data-act="regsubmit" ${clashes.length?"disabled":""}>${S.reg.submitted?"Update preferences":"Submit preferences"}</button>${S.reg.submitted?'<button class="btn line" type="button" data-act="regwithdraw">Withdraw</button>':""}</div>
       <p class="small muted">Seat counts and rules are examples. Real allotment would use the institute's priority rules (year, core vs elective, CGPA).</p>
@@ -824,7 +862,8 @@ const A={
         ${c.posts[0]?`<dt>Latest</dt><dd>${esc(c.posts[0][0])} <span class="small muted">· ${esc(c.posts[0][1])}</span></dd>`:""}
       </dl>
       <div class="row wrap" style="justify-content:flex-start"><a class="btn" href="#course-${slug(c.code)}" data-act="close">Open course page</a><button class="btn ghost" type="button" data-act="where" data-room="${esc(x.room)}">Directions</button><button class="btn line" type="button" data-act="msgic" data-c="${esc(c.code)}">Message IC</button></div>`);},
-  pick(d){S.reg.picks[d.c]=d.s;S.reg.submitted=false;save();route();},
+  pick(d){S.reg.picks[d.c][d.t]=d.s;S.reg.submitted=false;save();route();},
+  regmore(d){V.regOpen[d.k]=!V.regOpen[d.k];route();},
   regsubmit(){S.reg.submitted=true;save();route();toast("Preferences submitted. Results on 10 Dec.");},
   regwithdraw(){S.reg.submitted=false;save();route();toast("Preferences withdrawn. Submit again by 8 Dec.");},
   target(d){S.calcTarget=d.g;save();route();},
@@ -858,6 +897,7 @@ const A={
 document.addEventListener("click",e=>{const el=e.target.closest("[data-act]");if(!el)return;const fn=A[el.dataset.act];if(!fn)return;if(el.tagName!=="A")e.preventDefault();fn(el.dataset,el,e);});
 document.addEventListener("change",e=>{const el=e.target.closest("[data-change]");if(!el)return;const k=el.dataset.change;
   if(k==="due"){const s=V.wallet.sel;el.checked?s.add(el.dataset.id):s.delete(el.dataset.id);route();}
+  if(k==="fitonly"){S.reg.fitOnly=el.checked;save();route();}
   if(k==="calccourse"){S.calcCourse=el.value;save();route();}
   if(k==="parent"){S.parentAccess=el.checked;save();toast(el.checked?"Parent access on":"Parent access off");}
 });
