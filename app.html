@@ -185,6 +185,40 @@ tr:last-child td{border-bottom:0}
 .status.no{background:var(--bad-soft);color:var(--bad)}
 .status.info{background:var(--accent-soft);color:var(--accent)}
 
+/* weekly timetable */
+.tt{display:grid;grid-template-columns:64px repeat(6,minmax(120px,1fr));grid-template-rows:auto repeat(7,minmax(78px,auto));gap:6px;min-width:840px}
+.tt-day{grid-row:1;text-align:center;font-weight:700;padding:6px 4px;border-radius:10px}
+.tt-day small{display:block;font-weight:400;font-size:.74rem;color:var(--muted)}
+.tt-day.today{background:var(--accent);color:var(--accent-ink)}
+.tt-day.today small{color:inherit;opacity:.85}
+.tt-todaycol{background:var(--accent-soft);border-radius:12px;opacity:.55;margin:-3px}
+.tt-hr{grid-column:1;font-family:var(--mono);font-size:.72rem;color:var(--muted);text-align:right;padding:4px 6px 0 0}
+.tt-hr small{display:block;font-family:var(--body);font-size:.68rem;color:var(--warn)}
+.tt-empty{border-top:1px dashed var(--line)}
+.tt-empty.lunch{background:repeating-linear-gradient(135deg,transparent 0 6px,var(--sunk) 6px 8px);border-radius:8px;border-top:0}
+.tt-block{position:relative;z-index:1;border-radius:11px;padding:8px 10px;color:var(--ink);text-align:left;min-width:0;
+  background:color-mix(in srgb,var(--c) 13%,var(--surface));border:1px solid color-mix(in srgb,var(--c) 45%,transparent);
+  display:flex;flex-direction:column;gap:2px;justify-content:flex-start}
+.tt-block:hover{background:color-mix(in srgb,var(--c) 22%,var(--surface))}
+.tt-block .t{font-family:var(--mono);font-size:.68rem;color:var(--muted);display:flex;gap:6px;align-items:center;justify-content:space-between}
+.tt-block .code{font-weight:700;font-size:.9rem;display:flex;gap:6px;align-items:center}
+.cdot{width:9px;height:9px;border-radius:50%;background:var(--c);flex:none;display:inline-block}
+.tt-block .nm{font-size:.78rem;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.tt-block .meta{font-size:.72rem;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:auto}
+.tt-block .kind{background:color-mix(in srgb,var(--c) 20%,transparent);color:var(--ink);border-radius:5px;padding:0 6px}
+.tt-block.past{opacity:.55}
+.tt-block.next{box-shadow:0 0 0 2px var(--accent)}
+.nexttag,.donetag{font-family:var(--body);font-size:.64rem;border-radius:999px;padding:0 7px}
+.nexttag{background:var(--accent);color:var(--accent-ink)}
+.donetag{background:var(--sunk);color:var(--muted)}
+.tt-daylist{display:flex;flex-direction:column;gap:10px}
+.tt-dayrow{display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;align-items:stretch}
+.tt-dayrow .time{width:auto;padding-top:8px}
+.tt-dayrow .tt-block{padding:12px 14px}
+.tt-dayrow .tt-block .nm{white-space:normal}
+.dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 16px;font-size:.92rem}
+.dl dt{color:var(--muted)}
+.dl dd{margin:0}
 /* ps */
 .rank{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
 .rank .n{font-family:var(--display);font-weight:800;font-size:1.3rem;color:var(--accent)}
@@ -439,12 +473,48 @@ V.today=()=>{
 };
 
 function acadTabs(on){return `<nav class="subtabs">${[["acad-courses","Courses"],["acad-reg","Registration"],["acad-grades","Grades"],["acad-ps","Practice School"]].map(([h,l])=>`<a href="#${h}" class="${on===h?"on":""}">${l}</a>`).join("")}</nav>`;}
+const CCOL=["#5B5FE0","#D9822B","#2E9C6A","#B04FA8","#3B8FB8"];
+const WEEKDATES=["24 Nov","25 Nov","26 Nov","27 Nov","28 Nov","29 Nov"];
+const h12=h=>((h+11)%12)+1;
+function weekSlots(){const out=[];COURSES.forEach((c,ci)=>c.slots.forEach(s=>{const lab=/Lab/.test(s[2]);out.push({c,ci,d:s[0],h:s[1],room:s[2],lab,dur:lab?2:1});}));return out.sort((a,b)=>a.d-b.d||a.h-b.h);}
+function slotTime(x){const e=x.h+x.dur-1;return `${h12(x.h)}:00–${h12(e)}:50 ${e>=12?"PM":"AM"}`;}
+function nextSlot(){return weekSlots().find(x=>x.d===TODAY_IDX&&x.h>NOW_HOUR);}
+function slotState(x){if(x.d<TODAY_IDX||(x.d===TODAY_IDX&&x.h+x.dur<=NOW_HOUR))return "past";const n=nextSlot();return n&&n.c===x.c&&n.d===x.d&&n.h===x.h?"next":"";}
+function slotBlock(x,place){const st=slotState(x);
+  return `<button type="button" class="tt-block ${st}" style="--c:${CCOL[x.ci]};${place?`grid-column:${x.d+2};grid-row:${x.h-9+2} / span ${x.dur}`:""}" data-act="slot" data-c="${esc(x.c.code)}" data-d="${x.d}" data-h="${x.h}" aria-label="${esc(x.c.code)} ${esc(x.c.name)}, ${DAYS[x.d]} ${slotTime(x)}, ${esc(x.room)}">
+    <span class="t">${slotTime(x)}${st==="next"?'<b class="nexttag">Next</b>':st==="past"&&x.d===TODAY_IDX?'<b class="donetag">Done</b>':""}</span>
+    <span class="code"><i class="cdot"></i>${esc(x.c.code)}</span>
+    <span class="nm">${esc(x.c.name)}</span>
+    <span class="meta"><span>${esc(x.room)}</span><span class="kind">${x.lab?"Lab":"Lecture"}</span></span></button>`;}
 V["acad-courses"]=()=>{
-  const rows=[];for(let h=9;h<=15;h++){rows.push(`<div>${h>12?h-12:h}${h>=12?"p":"a"}</div>`+DAYS.map((d,di)=>{let hit=null;COURSES.forEach((c,ci)=>c.slots.forEach(s=>{if(s[0]===di&&s[1]===h)hit={c,ci,s};}));return hit?`<div class="cell" style="background:${["#5B5FE0","#D9822B","#2E9C6A","#B04FA8","#3B8FB8"][hit.ci]};color:#fff">${hit.c.code.split(" ")[1]}</div>`:`<div class="cell"></div>`;}).join(""));}
+  if(!V.ttView)V.ttView=window.innerWidth<760?"day":"week";
+  if(V.ttDay==null)V.ttDay=TODAY_IDX;
+  const slots=weekSlots(),hours=slots.reduce((a,x)=>a+x.dur,0),labs=slots.filter(x=>x.lab).length,nx=nextSlot();
+  let body;
+  if(V.ttView==="week"){
+    let g=`<div class="tt-corner"></div>`+DAYS.map((d,i)=>`<div class="tt-day ${i===TODAY_IDX?"today":""}" style="grid-column:${i+2}">${d}<small>${WEEKDATES[i]}${i===TODAY_IDX?" · Today":""}</small></div>`).join("");
+    g+=`<div class="tt-todaycol" style="grid-column:${TODAY_IDX+2};grid-row:2 / span 7"></div>`;
+    for(let h=9;h<=15;h++){g+=`<div class="tt-hr" style="grid-row:${h-9+2}">${h12(h)} ${h>=12?"PM":"AM"}${h===13?'<small>Lunch</small>':""}</div>`;
+      DAYS.forEach((d,i)=>{g+=`<div class="tt-empty ${h===13?"lunch":""}" style="grid-column:${i+2};grid-row:${h-9+2}"></div>`;});}
+    g+=slots.map(x=>slotBlock(x,true)).join("");
+    body=`<div class="tablewrap"><div class="tt">${g}</div></div>`;
+  }else{
+    const ds=slots.filter(x=>x.d===V.ttDay);
+    body=`<div class="segment" role="group" aria-label="Day">${DAYS.map((d,i)=>`<button type="button" data-act="ttday" data-d="${i}" aria-pressed="${i===V.ttDay}">${d} <span class="small" style="opacity:.75">${WEEKDATES[i].split(" ")[0]}</span></button>`).join("")}</div>
+      ${ds.length?`<div class="tt-daylist">${ds.map(x=>`<div class="tt-dayrow"><span class="time">${h12(x.h)}:00<br><span class="small">${x.h>=12?"PM":"AM"}</span></span>${slotBlock(x,false)}</div>`).join("")}</div>`:'<div class="empty">No classes on this day.</div>'}`;
+  }
   return `<div class="page"><div class="page-head"><div class="stack"><span class="eyebrow">Semester I · 2026–27</span><h1>Academics</h1></div><button class="btn ghost sm" type="button" data-act="ics">Add to my calendar</button></div>
     ${acadTabs("acad-courses")}
+    <div class="card">
+      <div class="card-head" style="flex-wrap:wrap"><div class="stack" style="gap:2px"><h3>This week · 24–29 Nov</h3><span class="small muted">${COURSES.length} courses · ${hours} contact hours · ${labs} lab${labs===1?"":"s"}${nx?` · Next: <b style="color:var(--ink)">${esc(nx.c.code)}</b> at ${h12(nx.h)}:00 in ${esc(nx.room)}`:""}</span></div>
+        <div class="segment" role="group" aria-label="Timetable view"><button type="button" data-act="ttview" data-v="week" aria-pressed="${V.ttView==="week"}">Week</button><button type="button" data-act="ttview" data-v="day" aria-pressed="${V.ttView==="day"}">Day</button></div></div>
+      ${body}
+      <p class="small muted">Tap any class for room, instructor, marks and compre details.</p>
+    </div>
+    <div class="card"><h3>Your courses this semester</h3><div class="tablewrap"><table style="min-width:760px"><thead><tr><th>Course</th><th>Section</th><th>Instructor-in-charge</th><th>Rooms</th><th class="r">Hrs/week</th><th class="r">Marks so far</th><th>Compre</th></tr></thead><tbody>
+      ${COURSES.map((c,ci)=>{const ss=slots.filter(x=>x.c===c);return `<tr><td><a href="#course-${slug(c.code)}" style="text-decoration:none;display:flex;gap:8px;align-items:flex-start"><i class="cdot" style="--c:${CCOL[ci]};margin-top:6px"></i><span><b>${esc(c.code)}</b><br><span class="small muted">${esc(c.name)}</span></span></a></td><td class="mono">${esc(c.sec)}</td><td>${esc(c.ic)}</td><td class="small">${[...new Set(ss.map(x=>x.room))].map(esc).join(", ")}</td><td class="r mono">${ss.reduce((a,x)=>a+x.dur,0)}</td><td class="r mono">${scored(c)}/${maxSoFar(c)}</td><td class="small">${esc(c.compre)}</td></tr>`;}).join("")}
+    </tbody></table></div></div>
     <div class="grid3 aligned" style="--rows:6">${COURSES.map(c=>{const p=Math.round(scored(c)/maxSoFar(c)*100);return `<a class="card link" href="#course-${slug(c.code)}"><div class="card-head"><span class="mono small">${esc(c.code)} · ${esc(c.sec)}</span><span class="pill info">${c.units} units</span></div><h3>${esc(c.name)}</h3><span class="small muted">${esc(c.ic)}</span><div class="row small"><span>So far ${scored(c)}/${maxSoFar(c)}</span><span class="mono">${p}%</span></div><div class="meter"><i style="width:${p}%"></i></div><span class="small muted">Compre: ${esc(c.compre)}</span></a>`;}).join("")}</div>
-    <div class="card"><h3>This week</h3><div class="tablewrap"><div class="ttgrid" style="min-width:420px"><div></div>${DAYS.map((d,i)=>`<div style="${i===TODAY_IDX?"color:var(--accent);font-weight:700":""}">${d}</div>`).join("")}${rows.join("")}</div></div></div>
   </div>`;
 };
 V.course=(s)=>{
@@ -719,6 +789,21 @@ const A={
   ics(){toast("Calendar file would download here. Timetable and compre dates included.");},
   msgic(d){modal(`<div class="modal-head"><h2>Message ${esc(d.c)} IC</h2><button class="x" type="button" data-act="close" aria-label="Close">✕</button></div><form class="form" data-form="msg"><label class="field">Message<textarea id="msgText" required placeholder="Your question"></textarea></label><button class="btn" type="submit">Send</button></form>`);},
   setcalc(d){S.calcCourse=d.c;save();},
+  ttview(d){V.ttView=d.v;route();},
+  ttday(d){V.ttDay=+d.d;route();},
+  slot(d){const x=weekSlots().find(s=>s.c.code===d.c&&s.d===+d.d&&s.h===+d.h);if(!x)return;const c=x.c,p=Math.round(scored(c)/maxSoFar(c)*100),st=slotState(x);
+    modal(`<div class="modal-head"><div class="stack" style="gap:2px"><span class="eyebrow" style="display:flex;gap:6px;align-items:center"><i class="cdot" style="--c:${CCOL[x.ci]}"></i>${esc(c.code)} · Section ${esc(c.sec)} · ${x.lab?"Lab":"Lecture"}</span><h2>${esc(c.name)}</h2></div><button class="x" type="button" data-act="close" aria-label="Close">✕</button></div>
+      ${st==="next"?'<div class="status info">Your next class today.</div>':""}
+      <dl class="dl">
+        <dt>When</dt><dd>${DAYS[x.d]}, ${WEEKDATES[x.d]} · ${slotTime(x)}</dd>
+        <dt>Where</dt><dd>${esc(x.room)} <span class="small muted">· ${esc(ROOMS[x.room]||"")}</span></dd>
+        <dt>Instructor</dt><dd>${esc(c.ic)}</dd>
+        <dt>Units</dt><dd>${c.units}</dd>
+        <dt>Marks so far</dt><dd><b>${scored(c)} / ${maxSoFar(c)}</b> (${p}%)<div class="meter" style="margin-top:6px"><i style="width:${p}%"></i></div></dd>
+        <dt>Compre</dt><dd>${esc(c.compre)}</dd>
+        ${c.posts[0]?`<dt>Latest</dt><dd>${esc(c.posts[0][0])} <span class="small muted">· ${esc(c.posts[0][1])}</span></dd>`:""}
+      </dl>
+      <div class="row wrap" style="justify-content:flex-start"><a class="btn" href="#course-${slug(c.code)}" data-act="close">Open course page</a><button class="btn ghost" type="button" data-act="where" data-room="${esc(x.room)}">Directions</button><button class="btn line" type="button" data-act="msgic" data-c="${esc(c.code)}">Message IC</button></div>`);},
   pick(d){S.reg.picks[d.c]=d.s;S.reg.submitted=false;save();route();},
   regsubmit(){S.reg.submitted=true;save();route();toast("Preferences submitted. Results on 10 Dec.");},
   regwithdraw(){S.reg.submitted=false;save();route();toast("Preferences withdrawn. Submit again by 8 Dec.");},
