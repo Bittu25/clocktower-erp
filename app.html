@@ -91,6 +91,10 @@ main{padding-block:24px 48px;padding-left:max(20px,env(safe-area-inset-left,0px)
 .subtabs a.on{color:var(--accent);border-color:var(--accent)}
 .grid2{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}
 .grid3{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+/* Cards in a row share row tracks, so titles, marks, bars and dates line up across cards. */
+.grid3.aligned>.card{display:grid;grid-row:span var(--rows,4);grid-template-rows:subgrid;row-gap:10px;align-content:start}
+.grid3.aligned>.card>.btn{justify-self:start;align-self:end}
+.grid3.aligned>.card>.meter{align-self:center}
 .col{display:flex;flex-direction:column;gap:14px;min-width:0}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .card.link{text-decoration:none;cursor:pointer}
@@ -439,7 +443,7 @@ V["acad-courses"]=()=>{
   const rows=[];for(let h=9;h<=15;h++){rows.push(`<div>${h>12?h-12:h}${h>=12?"p":"a"}</div>`+DAYS.map((d,di)=>{let hit=null;COURSES.forEach((c,ci)=>c.slots.forEach(s=>{if(s[0]===di&&s[1]===h)hit={c,ci,s};}));return hit?`<div class="cell" style="background:${["#5B5FE0","#D9822B","#2E9C6A","#B04FA8","#3B8FB8"][hit.ci]};color:#fff">${hit.c.code.split(" ")[1]}</div>`:`<div class="cell"></div>`;}).join(""));}
   return `<div class="page"><div class="page-head"><div class="stack"><span class="eyebrow">Semester I · 2026–27</span><h1>Academics</h1></div><button class="btn ghost sm" type="button" data-act="ics">Add to my calendar</button></div>
     ${acadTabs("acad-courses")}
-    <div class="grid3">${COURSES.map(c=>{const p=Math.round(scored(c)/maxSoFar(c)*100);return `<a class="card link" href="#course-${slug(c.code)}"><div class="card-head"><span class="mono small">${esc(c.code)} · ${esc(c.sec)}</span><span class="pill info">${c.units} units</span></div><h3>${esc(c.name)}</h3><span class="small muted">${esc(c.ic)}</span><div class="row small"><span>So far ${scored(c)}/${maxSoFar(c)}</span><span class="mono">${p}%</span></div><div class="meter"><i style="width:${p}%"></i></div><span class="small muted">Compre: ${esc(c.compre)}</span></a>`;}).join("")}</div>
+    <div class="grid3 aligned" style="--rows:6">${COURSES.map(c=>{const p=Math.round(scored(c)/maxSoFar(c)*100);return `<a class="card link" href="#course-${slug(c.code)}"><div class="card-head"><span class="mono small">${esc(c.code)} · ${esc(c.sec)}</span><span class="pill info">${c.units} units</span></div><h3>${esc(c.name)}</h3><span class="small muted">${esc(c.ic)}</span><div class="row small"><span>So far ${scored(c)}/${maxSoFar(c)}</span><span class="mono">${p}%</span></div><div class="meter"><i style="width:${p}%"></i></div><span class="small muted">Compre: ${esc(c.compre)}</span></a>`;}).join("")}</div>
     <div class="card"><h3>This week</h3><div class="tablewrap"><div class="ttgrid" style="min-width:420px"><div></div>${DAYS.map((d,i)=>`<div style="${i===TODAY_IDX?"color:var(--accent);font-weight:700":""}">${d}</div>`).join("")}${rows.join("")}</div></div></div>
   </div>`;
 };
@@ -570,7 +574,7 @@ V["campus-hostel"]=()=>{
 };
 V["campus-events"]=()=>`<div class="page"><div class="page-head"><div class="stack"><span class="eyebrow">Clubs, departments, fests</span><h1>Campus</h1></div></div>
     ${campusTabs("campus-events")}
-    <div class="grid3">${EVENTS.map(e=>`<div class="card"><div class="card-head"><span class="pill plain">${esc(e.org)}</span><span class="small mono">${e.price?inr(e.price):"Free"}</span></div><h3>${esc(e.name)}</h3><span class="small muted">${esc(e.when)} · ${esc(e.where)}</span>
+    <div class="grid3 aligned" style="--rows:4">${EVENTS.map(e=>`<div class="card"><div class="card-head"><span class="pill plain">${esc(e.org)}</span><span class="small mono">${e.price?inr(e.price):"Free"}</span></div><h3>${esc(e.name)}</h3><span class="small muted">${esc(e.when)} · ${esc(e.where)}</span>
       ${S.rsvp[e.id]?`<div class="row"><span class="pill good">Going · pass in Wallet</span><button class="btn sm line" type="button" data-act="rsvp" data-id="${e.id}">Cancel</button></div>`:`<button class="btn sm" type="button" data-act="rsvp" data-id="${e.id}" style="align-self:flex-start">${e.price?"Get pass · "+inr(e.price):"RSVP"}</button>`}</div>`).join("")}</div>
     <div class="card"><h3>Notice sources</h3><p class="small muted">Mute a source to hide its stories on Today. Academic and SWD notices can't be muted.</p><div class="list">${[...new Set(NOTICES.map(n=>n.src))].map(src=>{const n=NOTICES.find(x=>x.src===src),locked=src==="AUGSD"||src==="SWD";return `<div class="li nolead"><span><b>${esc(n.who)}</b></span>${locked?'<span class="pill plain">Always on</span>':`<button class="btn sm ${S.mutes[src]?"":"line"}" type="button" data-act="mute" data-src="${src}">${S.mutes[src]?"Unmute":"Mute"}</button>`}</div>`;}).join("")}</div></div>
   </div>`;
