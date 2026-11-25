@@ -296,6 +296,31 @@ tr:last-child td{border-bottom:0}
 .gbtn{display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:12px;font-weight:700}
 .gdot{width:18px;height:18px;border-radius:50%;background:conic-gradient(#EA4335 0 25%,#FBBC05 0 50%,#34A853 0 75%,#4285F4 0)}
 
+/* phone layout polish */
+.demo-strip .short{display:none}
+.phone-only{display:none!important}
+.meal{display:flex;flex-direction:column;gap:2px;padding:12px 0;border-bottom:1px solid var(--line)}
+.meal:last-child{border-bottom:0}
+.regbar{display:none}
+.card-head > b,.card-head > h3{min-width:0}
+.card-head > span.small{white-space:nowrap}
+.page > a.small{display:inline-flex;align-items:center;min-height:40px;align-self:flex-start}
+.morebtn{padding:10px 0}
+@media (max-width:900px){
+  .regbar{display:flex;position:sticky;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:12;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px 10px 16px;box-shadow:var(--shadow);font-weight:700;font-size:.9rem}
+  .rb-ok{color:var(--good)} .rb-bad{color:var(--bad)}
+  .card-head a.small{padding:10px 0}
+}
+@media (max-width:640px){
+  .phone-only{display:flex!important}
+  .desk-only{display:none!important}
+}
+@media (max-width:520px){
+  .demo-strip .long{display:none}
+  .demo-strip .short{display:inline}
+  .demo-strip{padding:4px 16px}
+}
 /* sun / moon theme switch: only one icon shows at a time */
 .themebtn{margin-left:auto;color:var(--ink)}
 .ti-sun{display:none;color:var(--marigold)}
@@ -337,7 +362,7 @@ tr:last-child td{border-bottom:0}
   .bottom a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.72rem;font-weight:600;color:var(--muted);text-decoration:none;padding:4px 0}
   .bottom a.on{color:var(--accent)}
   .bottom .ic{width:22px;height:22px}
-  .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+  .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
 }
 @media (max-width:520px){
   h1{font-size:1.55rem}
@@ -382,7 +407,7 @@ tr:last-child td{border-bottom:0}
   </aside>
 
   <div class="main-col">
-    <div class="demo-strip">Prototype with sample data. Nothing here connects to real BITS systems or moves real money.</div>
+    <div class="demo-strip"><span class="long">Prototype with sample data. Nothing here connects to real BITS systems or moves real money.</span><span class="short">Prototype · sample data only</span></div>
     <header class="top">
       <span class="mbrand" aria-label="Clocktower"><span class="brand-mark">C</span></span>
       <button class="searchbtn" type="button" data-act="palette" aria-label="Search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span>Search<span class="lbl-long"> courses, rooms, requests…</span></span><kbd>⌘K</kbd></button>
@@ -677,7 +702,11 @@ V["acad-reg"]=()=>{
       ${status}
       <div class="row wrap"><button class="btn" type="button" data-act="regsubmit" ${clashes.length?"disabled":""}>${S.reg.submitted?"Update preferences":"Submit preferences"}</button>${S.reg.submitted?'<button class="btn line" type="button" data-act="regwithdraw">Withdraw</button>':""}</div>
       <p class="small muted">Seat counts and rules are examples. Real allotment would use the institute's priority rules (year, core vs elective, CGPA).</p>
-    </div></div></div>`;
+    </div></div>
+    <div class="regbar">${S.reg.submitted?'<span class="rb-ok">✓ Submitted · results 10 Dec</span><button class="btn sm line" type="button" data-act="regwithdraw">Withdraw</button>'
+      :clashes.length?`<span class="rb-bad">⚠ ${new Set(clashes.flatMap(c=>c[1].map(x=>x.code))).size} courses clash</span><button class="btn sm" type="button" data-act="regauto">Auto-fix</button>`
+      :`<span class="rb-ok">✓ No clashes · ${units} units</span><button class="btn sm" type="button" data-act="regsubmit">Submit</button>`}</div>
+    </div>`;
 };
 V["acad-grades"]=()=>{
   const c=COURSES.find(x=>x.code===S.calcCourse)||COURSES[0];
@@ -745,7 +774,12 @@ V["campus-mess"]=()=>{
   const days=Object.keys(MENU);
   return `<div class="page"><div class="page-head"><div class="stack"><span class="eyebrow">${esc(STUDENT.mess)}</span><h1>Campus</h1></div></div>
     ${campusTabs("campus-mess")}
-    <div class="grid2"><div class="col"><div class="card"><h3>This week's menu</h3><div class="tablewrap"><table><thead><tr><th>Day</th><th>Breakfast</th><th>Lunch</th><th>Dinner</th></tr></thead><tbody>
+    <div class="grid2"><div class="col">
+      <div class="card phone-only"><h3>Menu</h3>
+        <div class="daystrip" style="grid-template-columns:repeat(7,minmax(0,1fr))" role="group" aria-label="Day">${days.map((d,i)=>`<button type="button" data-act="messday" data-d="${d}" aria-pressed="${d===(V.messDay||"Wed")}"><span class="dn">${d}</span><span class="dd">${24+i}</span>${d==="Wed"?'<i class="todaydot"></i>':""}</button>`).join("")}</div>
+        <div class="list">${["Breakfast · 7:30–9:30 AM","Lunch · 12:00–2:00 PM","Dinner · 7:30–9:30 PM"].map((m,i)=>`<div class="meal"><span class="eyebrow">${m}</span><span>${esc(MENU[V.messDay||"Wed"][i])}</span></div>`).join("")}</div>
+      </div>
+      <div class="card desk-only"><h3>This week's menu</h3><div class="tablewrap"><table><thead><tr><th>Day</th><th>Breakfast</th><th>Lunch</th><th>Dinner</th></tr></thead><tbody>
       ${days.map(d=>`<tr style="${d==="Wed"?"background:var(--accent-soft)":""}"><td><b>${d}</b>${d==="Wed"?' <span class="pill info">Today</span>':""}</td>${MENU[d].map(m=>`<td class="small">${esc(m)}</td>`).join("")}</tr>`).join("")}</tbody></table></div></div></div>
     <div class="col">
       <div class="card"><h3>Grubs</h3><div class="list">${GRUBS.map(g=>`<div class="li nolead"><div><b>${esc(g.name)}</b><div class="small muted">${esc(g.when)} · ${inr(g.price)}, added to mess bill</div></div>${S.grubs[g.id]?`<button class="btn sm line" type="button" data-act="grub" data-id="${g.id}">Cancel</button>`:`<button class="btn sm" type="button" data-act="grub" data-id="${g.id}">Sign up</button>`}</div>`).join("")}</div></div>
@@ -977,6 +1011,7 @@ const A={
   msgic(d){modal(`<div class="modal-head"><h2>Message ${esc(d.c)} IC</h2><button class="x" type="button" data-act="close" aria-label="Close">✕</button></div><form class="form" data-form="msg"><label class="field">Message<textarea id="msgText" required placeholder="Your question"></textarea></label><button class="btn" type="submit">Send</button></form>`);},
   setcalc(d){S.calcCourse=d.c;save();},
   ttview(d){V.ttView=d.v;route();},
+  messday(d){V.messDay=d.d;route();},
   ttexport(d){openExport(d.w);},
   expng(){if(!EXP)return;EXP.cv.toBlob(b=>{saveBlob(b,EXP.base+".png");toast("Image downloaded: "+EXP.base+".png");},"image/png");},
   expdf(el){if(!EXP)return;toast("Preparing PDF…");loadJsPDF().then(jsPDF=>{const pdf=new jsPDF({orientation:"landscape",unit:"mm",format:"a4"});const pw=297,ph=210,m=8,r=EXP.cv.height/EXP.cv.width;let w=pw-2*m,h=w*r;if(h>ph-2*m){h=ph-2*m;w=h/r;}
