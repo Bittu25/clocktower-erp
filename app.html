@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Clocktower Student App</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: app shell. Desktop = left sidebar + top bar + content. Phone = top bar + content + bottom tabs. */
+:root{
+  --bg:#FFFFFF; --panel:#F6F7FB; --surface:#FFFFFF; --sunk:#F0F1F7; --ink:#14173A; --muted:#5A6083; --line:#DFE2EE;
+  --accent:#3438C9; --accent-ink:#FFFFFF; --accent-soft:#E6E7FC; --marigold:#E79A00; --marigold-soft:#FFF3D9;
+  --good:#1C8653; --good-soft:#E0F4E9; --warn:#A86200; --bad:#CC3434; --bad-soft:#FCE5E5;
+  --shadow:0 10px 30px -18px rgba(20,23,58,.35);
+  --display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
+  --body:"Instrument Sans","Helvetica Neue",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0D0F24; --panel:#121531; --surface:#171A36; --sunk:#1F2345; --ink:#ECEDF8; --muted:#A3A8CA; --line:#2C315A;
+  --accent:#8D91FF; --accent-ink:#0D0F24; --accent-soft:#272B60; --marigold:#FFB627; --marigold-soft:#3A2E10;
+  --good:#4CC98A; --good-soft:#163A28; --warn:#FFB54D; --bad:#FF7A7A; --bad-soft:#401C22;
+  --shadow:0 10px 30px -18px rgba(0,0,0,.8); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.15;text-wrap:balance}
+h1{font-size:1.9rem;font-weight:800;letter-spacing:-.01em}
+h2{font-size:1.25rem;font-weight:700}
+h3{font-size:1.02rem;font-weight:700}
+p{margin:0}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+.mono{font-family:var(--mono)}
+.muted{color:var(--muted)}
+.small{font-size:.84rem}
+.eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+
+/* shell */
+.shell{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100%}
+.side{position:sticky;top:0;height:100vh;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:6px;padding:20px 14px}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px 16px}
+.brand-mark{width:34px;height:34px;border-radius:10px;background:var(--accent);display:grid;place-items:center;color:var(--accent-ink);font-family:var(--display);font-weight:800}
+.brand b{font-family:var(--display);font-size:1.15rem;display:block;line-height:1.1}
+.brand span{font-size:.72rem;color:var(--muted)}
+.navlink{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;text-decoration:none;font-weight:600;color:var(--muted)}
+.navlink:hover{background:var(--sunk);color:var(--ink)}
+.navlink.on{background:var(--accent-soft);color:var(--accent)}
+.navlink .ic{width:20px;height:20px;flex:none}
+.navlink .count{margin-left:auto;font-size:.72rem;background:var(--bad);color:#fff;border-radius:999px;padding:0 7px}
+.side-foot{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.me{display:flex;gap:10px;align-items:center;padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--surface);text-align:left;width:100%}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--marigold);color:#2a1d00;display:grid;place-items:center;font-weight:700;font-size:.85rem;flex:none}
+.me b{display:block;font-size:.88rem}
+.me span{font-size:.72rem;color:var(--muted);font-family:var(--mono)}
+.main-col{min-width:0;display:flex;flex-direction:column}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:var(--bg);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:10px;padding-block:12px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:16;background:var(--bg)}
+.top .mbrand{display:none;align-items:center;gap:8px;font-family:var(--display);font-weight:800;font-size:1.1rem}
+.top .mbrand .brand-mark{width:28px;height:28px;font-size:.9rem;border-radius:8px}
+.searchbtn{flex:1;max-width:520px;display:flex;align-items:center;gap:10px;background:var(--sunk);border:1px solid transparent;border-radius:12px;padding:9px 12px;color:var(--muted);text-align:left}
+.searchbtn:hover{border-color:var(--line)}
+.searchbtn kbd{margin-left:auto;font-family:var(--mono);font-size:.7rem;border:1px solid var(--line);border-radius:5px;padding:1px 6px;background:var(--surface)}
+.iconbtn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;position:relative;flex:none}
+.iconbtn .dot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:999px;background:var(--bad);color:#fff;font-size:.68rem;display:grid;place-items:center;padding:0 4px}
+.toggle{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px 6px 6px;font-size:.82rem;font-weight:600}
+.toggle .knob{width:32px;height:18px;border-radius:999px;background:var(--sunk);border:1px solid var(--line);position:relative;flex:none}
+.toggle .knob::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--marigold)}
+:root[data-theme="dark"] .toggle .knob::after{left:16px;background:var(--accent)}
+.top .toggle{margin-left:auto}
+main{padding-block:24px 48px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));width:100%;max-width:1120px}
+.bottom{display:none}
+.demo-strip{font-size:.75rem;color:var(--muted);background:var(--marigold-soft);padding:6px 20px;text-align:center}
+
+/* common */
+.page{display:flex;flex-direction:column;gap:20px}
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.page-head p{color:var(--muted)}
+.subtabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:0}
+.subtabs a{text-decoration:none;padding:9px 14px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.subtabs a.on{color:var(--accent);border-color:var(--accent)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}
+.grid3{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card.link{text-decoration:none;cursor:pointer}
+.card.link:hover{border-color:var(--accent)}
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.row.wrap{flex-wrap:wrap}
+.stack{display:flex;flex-direction:column;gap:6px}
+.hero-card{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.hero-card .muted,.hero-card .eyebrow{color:inherit;opacity:.8}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pill.good{background:var(--good-soft);color:var(--good)}
+.pill.warn{background:var(--marigold-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.info{background:var(--accent-soft);color:var(--accent)}
+.pill.plain{background:var(--sunk);color:var(--muted)}
+.btn{border:0;border-radius:11px;padding:10px 16px;background:var(--accent);color:var(--accent-ink);font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:var(--sunk);color:var(--ink)}
+.btn.line{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.btn.danger{background:var(--bad-soft);color:var(--bad)}
+.btn.onhero{background:var(--accent-ink);color:var(--accent)}
+.btn.sm{padding:6px 11px;font-size:.84rem;border-radius:9px}
+.btn.block{width:100%}
+.list{display:flex;flex-direction:column}
+.li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.li:last-child{border-bottom:0}
+.li.nolead{grid-template-columns:minmax(0,1fr) auto}
+.time{font-family:var(--mono);font-size:.8rem;color:var(--muted);width:64px}
+.badge-sq{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-family:var(--mono);font-size:.7rem;font-weight:600;flex:none}
+.amt{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.banner{border-radius:14px;padding:12px 16px;background:var(--marigold-soft);display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px}
+.stat{display:flex;flex-direction:column;gap:2px}
+.stat b{font-family:var(--display);font-size:1.7rem;line-height:1}
+label.field{display:flex;flex-direction:column;gap:6px;font-size:.85rem;font-weight:600}
+.field input,.field select,.field textarea{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;font-weight:400;font-size:.95rem;width:100%}
+.field textarea{min-height:84px;resize:vertical}
+.field .hint{font-weight:400;color:var(--muted);font-size:.78rem}
+.form{display:flex;flex-direction:column;gap:14px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.check{display:flex;gap:10px;align-items:center;font-size:.9rem}
+.check input{width:18px;height:18px;accent-color:var(--accent)}
+.segment{display:flex;gap:6px;flex-wrap:wrap}
+.segment button{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:6px 12px;font-weight:600;font-size:.86rem}
+.segment button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}
+th{font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:400}
+td.r,th.r{text-align:right}
+tr:last-child td{border-bottom:0}
+.meter{height:8px;border-radius:999px;background:var(--sunk);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--accent);border-radius:999px}
+
+/* stories */
+.stories{display:flex;gap:16px;overflow-x:auto;padding:4px 2px 6px}
+.story{display:flex;flex-direction:column;align-items:center;gap:6px;border:0;background:none;padding:0;font-size:.74rem;color:var(--muted);flex:none;width:64px}
+.story .ring{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:.7rem;font-weight:600;color:var(--ink);background:var(--surface);box-shadow:0 0 0 2px var(--bg),0 0 0 4.5px var(--marigold)}
+.story.seen .ring{box-shadow:0 0 0 2px var(--bg),0 0 0 4.5px var(--line)}
+
+/* timeline */
+.steps{list-style:none;margin:0;padding:0}
+.steps li{display:grid;grid-template-columns:24px minmax(0,1fr);gap:12px;position:relative;padding-bottom:18px}
+.steps li::before{content:"";position:absolute;left:11px;top:22px;bottom:0;width:2px;background:var(--line)}
+.steps li:last-child{padding-bottom:0}
+.steps li:last-child::before{display:none}
+.steps li.done::before{background:var(--good)}
+.steps .b{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);background:var(--surface);z-index:1;display:grid;place-items:center;font-size:.7rem;color:#fff}
+.steps li.done .b{background:var(--good);border-color:var(--good)}
+.steps li.now .b{border-color:var(--accent);box-shadow:0 0 0 5px var(--accent-soft)}
+.steps b{display:block;font-size:.95rem}
+.steps span{font-size:.82rem;color:var(--muted)}
+
+/* registration grid */
+.ttgrid{display:grid;grid-template-columns:44px repeat(6,minmax(0,1fr));gap:3px;font-family:var(--mono);font-size:.72rem}
+.ttgrid div{min-height:30px;border-radius:6px;display:grid;place-items:center;color:var(--muted);text-align:center;padding:2px}
+.ttgrid .cell{background:var(--sunk)}
+.ttgrid .cell.clash{background:var(--bad);color:#fff;font-weight:700}
+.ttgrid .cell.k0{background:#5B5FE0;color:#fff}.ttgrid .cell.k1{background:#D9822B;color:#fff}.ttgrid .cell.k2{background:#2E9C6A;color:#fff}.ttgrid .cell.k3{background:#B04FA8;color:#fff}
+.sw{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:6px;vertical-align:middle}
+.k0b{background:#5B5FE0}.k1b{background:#D9822B}.k2b{background:#2E9C6A}.k3b{background:#B04FA8}
+.secbtns{display:flex;gap:6px;flex-wrap:wrap}
+.secbtns button{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:5px 10px;font-family:var(--mono);font-size:.76rem;text-align:left}
+.secbtns button[aria-pressed="true"]{color:#fff;border-color:transparent}
+.status{border-radius:12px;padding:10px 14px;font-size:.9rem;font-weight:600}
+.status.ok{background:var(--good-soft);color:var(--good)}
+.status.no{background:var(--bad-soft);color:var(--bad)}
+.status.info{background:var(--accent-soft);color:var(--accent)}
+
+/* ps */
+.rank{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.rank .n{font-family:var(--display);font-weight:800;font-size:1.3rem;color:var(--accent)}
+.rank .mv{display:flex;gap:4px}
+.rank .mv button{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--sunk)}
+.rank .mv button:disabled{opacity:.3;cursor:default}
+
+/* id card */
+.idcard{border-radius:20px;padding:20px;background:linear-gradient(140deg,var(--accent),#1F2290);color:#fff;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;max-width:460px;box-shadow:var(--shadow)}
+:root[data-theme="dark"] .idcard{background:linear-gradient(140deg,#3438C9,#191B63)}
+.idcard .eyebrow{color:#ffffffb3}
+.idcard canvas{background:#fff;border-radius:10px;padding:6px;width:118px;height:118px}
+
+/* modal, toast, palette */
+.overlay{position:fixed;inset:0;z-index:40;background:rgba(10,12,35,.5);display:grid;place-items:center;padding:20px}
+.modal{background:var(--surface);color:var(--ink);border-radius:20px;width:min(520px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:var(--shadow)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.x{width:34px;height:34px;border-radius:50%;border:0;background:var(--sunk)}
+.palette{align-self:start;margin-top:10vh;padding:0;gap:0;overflow:hidden}
+.palette input{border:0;border-bottom:1px solid var(--line);padding:16px 18px;font-size:1.05rem;background:transparent;width:100%;outline:none}
+.palette ul{list-style:none;margin:0;padding:8px;max-height:50vh;overflow:auto}
+.palette li button{width:100%;text-align:left;border:0;background:none;padding:10px 12px;border-radius:10px;display:flex;justify-content:space-between;gap:10px}
+.palette li button.on,.palette li button:hover{background:var(--accent-soft)}
+.palette li span{color:var(--muted);font-size:.8rem}
+.toast{position:fixed;z-index:50;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:600;box-shadow:var(--shadow);max-width:calc(100% - 32px)}
+.storyview{background:#111329;color:#fff;border-radius:22px;width:min(400px,100%);aspect-ratio:9/15;max-height:calc(100vh - 40px);display:flex;flex-direction:column;padding:16px;gap:14px;position:relative}
+.storyview .bars{display:flex;gap:4px}
+.storyview .bars i{flex:1;height:3px;border-radius:2px;background:#ffffff40}
+.storyview .bars i.on{background:#fff}
+.storyview .src{display:flex;gap:10px;align-items:center}
+.storyview .src .ring{width:36px;height:36px;border-radius:50%;background:#fff;color:#111329;display:grid;place-items:center;font-family:var(--mono);font-size:.62rem;font-weight:700}
+.storyview .body{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+.storyview h2{font-size:1.6rem;color:#fff}
+.storyview .nav{position:absolute;inset:60px 0 90px;display:grid;grid-template-columns:1fr 1fr}
+.storyview .nav button{background:none;border:0}
+
+/* sign in */
+.signin{position:fixed;inset:0;z-index:60;background:var(--bg);display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-left,0px))}
+.signin-card{width:min(420px,100%);display:flex;flex-direction:column;gap:18px}
+.signin-card .brand-mark{width:52px;height:52px;font-size:1.5rem;border-radius:14px}
+.gbtn{display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:12px;font-weight:700}
+.gdot{width:18px;height:18px;border-radius:50%;background:conic-gradient(#EA4335 0 25%,#FBBC05 0 50%,#34A853 0 75%,#4285F4 0)}
+
+@media (max-width:900px){
+  .shell{grid-template-columns:1fr}
+  .side{display:none}
+  .top .mbrand{display:flex}
+  .searchbtn kbd,.searchbtn .lbl-long{display:none}
+  .top .toggle .tl{display:none}
+  .top .toggle{padding:6px}
+  main{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+  .grid2{grid-template-columns:1fr}
+  .bottom{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;z-index:20;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);
+    padding:8px max(8px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
+  .bottom a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.72rem;font-weight:600;color:var(--muted);text-decoration:none;padding:4px 0}
+  .bottom a.on{color:var(--accent)}
+  .bottom .ic{width:22px;height:22px}
+  .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+}
+@media (max-width:520px){
+  h1{font-size:1.55rem}
+  .top{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));gap:8px}
+  main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .form-row{grid-template-columns:1fr}
+  .ttgrid{grid-template-columns:30px repeat(6,minmax(0,1fr));font-size:.62rem}
+  .idcard{grid-template-columns:1fr}
+  .searchbtn{padding:9px 10px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .toggle .knob::after{transition:left .2s}
+  .navlink,.card.link{transition:background .15s,border-color .15s}
+}
+</style>
+</head>
+<body>
+
+<div class="signin" id="signin" hidden>
+  <div class="signin-card">
+    <span class="brand-mark">C</span>
+    <div class="stack"><h1>Clocktower</h1><p class="muted">Your whole BITS life in one place: classes, registration, leave, mess, money and more.</p></div>
+    <button class="gbtn" type="button" data-act="signin"><span class="gdot" aria-hidden="true"></span>Continue with BITS Google account</button>
+    <p class="small muted">Prototype: this signs you in as a sample student, Aarav Mehta. No real account or password is used, and nothing connects to BITS systems.</p>
+    <a class="small" href="index.html">Read the design notes</a>
+  </div>
+</div>
+
+<div class="shell">
+  <aside class="side" aria-label="Main navigation">
+    <div class="brand"><span class="brand-mark">C</span><div><b>Clocktower</b><span>BITS Pilani · prototype</span></div></div>
+    <a class="navlink" href="#today" data-tab="today"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Today</a>
+    <a class="navlink" href="#acad-courses" data-tab="acad"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M7 9v6c0 1.5 2.5 3 5 3s5-1.5 5-3V9"/></svg>Academics</a>
+    <a class="navlink" href="#campus-leave" data-tab="campus"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/></svg>Campus</a>
+    <a class="navlink" href="#wallet" data-tab="wallet"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M16 12h2"/><path d="M3 10h18"/></svg>Wallet</a>
+    <a class="navlink" href="#inbox" data-tab="inbox"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v11H8l-4 4z"/></svg>Inbox<span class="count" data-inbox-count></span></a>
+    <div class="side-foot">
+      <button class="toggle" type="button" data-act="theme"><span class="knob" aria-hidden="true"></span><span class="tl" data-theme-label>Dark mode</span></button>
+      <a class="navlink" href="index.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/></svg>Design notes</a>
+      <button class="me" type="button" data-act="profile"><span class="avatar">AM</span><span><b>Aarav Mehta</b><span>2023A7PS0412P</span></span></button>
+    </div>
+  </aside>
+
+  <div class="main-col">
+    <div class="demo-strip">Prototype with sample data. Nothing here connects to real BITS systems or moves real money.</div>
+    <header class="top">
+      <span class="mbrand"><span class="brand-mark">C</span>Clocktower</span>
+      <button class="searchbtn" type="button" data-act="palette" aria-label="Search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span>Search<span class="lbl-long"> courses, rooms, requests…</span></span><kbd>⌘K</kbd></button>
+      <button class="toggle" type="button" data-act="theme" aria-label="Switch theme"><span class="knob" aria-hidden="true"></span><span class="tl" data-theme-label>Dark mode</span></button>
+      <a class="iconbtn" href="#inbox" aria-label="Inbox"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v11H8l-4 4z"/></svg><span class="dot" data-inbox-count></span></a>
+    </header>
+    <main id="main" tabindex="-1"></main>
+  </div>
+</div>
+
+<nav class="bottom" aria-label="Main navigation">
+  <a href="#today" data-tab="today"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Today</a>
+  <a href="#acad-courses" data-tab="acad"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M7 9v6c0 1.5 2.5 3 5 3s5-1.5 5-3V9"/></svg>Academics</a>
+  <a href="#campus-leave" data-tab="campus"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/></svg>Campus</a>
+  <a href="#wallet" data-tab="wallet"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M16 12h2"/><path d="M3 10h18"/></svg>Wallet</a>
+</nav>
+
+<div class="overlay" id="overlay" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(function(){
+"use strict";
+/* ================= data ================= */
+const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat"];
+const TODAY_IDX=2; /* the prototype is pinned to Wed 26 Nov 2026, 9:42 AM */
+const NOW_HOUR=9.7;
+const STUDENT={name:"Aarav Mehta",id:"2023A7PS0412P",prog:"B.E. Computer Science · Year 3",hostel:"Budh Bhawan · Room 2147",mess:"Mess 2",campus:"Pilani",email:"f20230412@pilani.bits-pilani.ac.in",cgpa:8.33,units:84};
+const COURSES=[
+  {code:"CS F301",name:"Principles of Programming Languages",ic:"Prof. R. Iyer",sec:"L2",slots:[[0,10,"F102"],[2,10,"F102"],[4,10,"F102"]],comps:[["Assignments",20,16],["Midsem",35,24],["Compre",45,null]],compre:"Fri 5 Dec · 9:00 AM · LTC 5104",units:3,
+   posts:[["Assignment 3 marks uploaded","Mon 24 Nov"],["Compre syllabus: chapters 1–9, excluding 7.4","Fri 21 Nov"]]},
+  {code:"CS F303",name:"Computer Networks",ic:"Prof. S. Kulkarni",sec:"L1",slots:[[1,9,"F105"],[3,9,"F105"],[5,9,"F105"],[2,14,"CC Lab 2"]],comps:[["Quizzes",15,12],["Lab",20,17],["Midsem",30,21],["Compre",35,null]],compre:"Mon 8 Dec · 2:00 PM · F105",units:4,
+   posts:[["Lab 9 (Wireshark) due Sunday","Tue 25 Nov"]]},
+  {code:"CS F351",name:"Theory of Computation",ic:"Prof. A. Menon",sec:"L1",slots:[[0,11,"G104"],[2,11,"G104"],[4,11,"G104"]],comps:[["Quizzes",20,14],["Midsem",35,26],["Compre",45,null]],compre:"Wed 10 Dec · 9:00 AM · LTC 5101",units:3,
+   posts:[["Extra doubt session Thu 6 PM, G104","Tue 25 Nov"]]},
+  {code:"CS F320",name:"Foundations of Data Science",ic:"Prof. N. Rao",sec:"L1",slots:[[1,11,"LTC 5103"],[3,11,"LTC 5103"]],comps:[["Project",25,21],["Midsem",35,25],["Compre",40,null]],compre:"Fri 12 Dec · 2:00 PM · LTC 5103",units:3,
+   posts:[["Project demos graded; feedback on the course page","Sat 22 Nov"]]},
+  {code:"ECON F211",name:"Principles of Economics",ic:"Prof. P. Sinha",sec:"L1",slots:[[1,14,"NAB 6120"],[3,14,"NAB 6120"]],comps:[["Quizzes",20,15],["Midsem",35,27],["Compre",45,null]],compre:"Mon 15 Dec · 9:00 AM · NAB 6120",units:3,
+   posts:[]}
+];
+const CUTOFFS={"A":78,"A-":70,"B":62,"B-":55,"C":48,"C-":40};
+const SGPA=[["1-1",7.9],["1-2",8.3],["2-1",8.6],["2-2",8.5]];
+const NOTICES=[
+  {id:"n1",src:"AUGSD",who:"Academic office",title:"Compre seating plan is out",body:"Find your seat for each paper under Academics → Courses. Carry your ID card; the digital one in Wallet works too.",when:"Today, 8:10 AM"},
+  {id:"n2",src:"SWD",who:"Student Welfare",title:"Winter break leave: apply by 10 Dec",body:"Apply from Campus → Leave. Warden and SWD approve in the app; your gate pass appears in Wallet.",when:"Yesterday"},
+  {id:"n3",src:"CSIS",who:"Dept. of CS & IS",title:"Guest talk: compilers in industry",body:"Friday 28 Nov, 5 PM, F102. Open to all years. RSVP from Campus → Events.",when:"Yesterday"},
+  {id:"n4",src:"ACM",who:"ACM student chapter",title:"Winter Hackathon registrations open",body:"Teams of 2–4. Saturday 29 Nov, 10 AM, NAB. Register from Campus → Events.",when:"Mon"},
+  {id:"n5",src:"LIB",who:"Library",title:"Extended hours for compre",body:"Library open 8 AM – 2 AM from 1 Dec to 16 Dec.",when:"Mon"},
+  {id:"n6",src:"NSS",who:"NSS",title:"Blood donation camp on Saturday",body:"Medical Centre, 9 AM – 1 PM. Walk in, or book a slot in Events.",when:"Sun"}
+];
+const EVENTS=[
+  {id:"e1",name:"Guest talk: compilers in industry",org:"CSIS",when:"Fri 28 Nov · 5:00 PM",where:"F102",price:0},
+  {id:"e2",name:"ACM Winter Hackathon",org:"ACM",when:"Sat 29 Nov · 10:00 AM",where:"NAB",price:0},
+  {id:"e3",name:"Blood donation camp",org:"NSS",when:"Sat 29 Nov · 9:00 AM",where:"Medical Centre",price:0},
+  {id:"e4",name:"Unplugged night",org:"Music Club",when:"Sun 30 Nov · 7:00 PM",where:"Auditorium",price:100}
+];
+const GRUBS=[{id:"g1",name:"Punjabi Grub",when:"Sat 29 Nov · dinner",price:250},{id:"g2",name:"South Indian Grub",when:"Wed 3 Dec · lunch",price:200}];
+const MENU={
+  Mon:["Aloo paratha, curd, tea","Dal makhani, jeera rice, roti, salad","Paneer butter masala, roti, rice, gulab jamun"],
+  Tue:["Poha, jalebi, milk","Kadhi pakora, rice, roti, aloo gobhi","Egg curry / chana masala, rice, roti"],
+  Wed:["Idli, sambar, chutney, coffee","Rajma chawal, jeera aloo, roti, curd, kheer","Veg biryani, raita, mirchi ka salan"],
+  Thu:["Bread omelette / upma, tea","Chole bhature, rice, salad","Mix veg, dal tadka, roti, rice, halwa"],
+  Fri:["Puri sabzi, tea","Sambar rice, rasam, papad, poriyal","Kadai paneer, roti, fried rice"],
+  Sat:["Masala dosa, chutney, coffee","Dal baati churma, salad","Pav bhaji, pulao, ice cream"],
+  Sun:["Chole kulche, lassi","Special thali","Light dinner: khichdi, kadhi, papad"]
+};
+const PS_STATIONS=[
+  {id:"p1",city:"Bengaluru",field:"Fintech · backend engineering",seats:14,cut:8.1,rating:4.3,stipend:"Yes"},
+  {id:"p2",city:"Hyderabad",field:"Semiconductors · design verification",seats:8,cut:8.4,rating:4.5,stipend:"Yes"},
+  {id:"p3",city:"Pune",field:"Automotive · embedded systems",seats:10,cut:7.6,rating:4.0,stipend:"Yes"},
+  {id:"p4",city:"Gurugram",field:"E-commerce · data analytics",seats:12,cut:7.9,rating:3.9,stipend:"Yes"},
+  {id:"p5",city:"Pilani",field:"Research lab · electronics",seats:6,cut:7.2,rating:4.4,stipend:"No"}
+];
+const REG=[
+  {code:"CS F363",name:"Compiler Construction",secs:{L1:[[0,10],[2,10],[4,10]],L2:[[1,11],[3,11],[5,11]]},seats:{L1:12,L2:31},units:4},
+  {code:"CS F364",name:"Design & Analysis of Algorithms",secs:{L1:[[0,10],[2,10],[4,10]],L2:[[1,14],[3,14],[5,9]]},seats:{L1:5,L2:40},units:3},
+  {code:"CS F372",name:"Operating Systems",secs:{L1:[[0,12],[2,12],[4,12]],L2:[[1,10],[3,10],[5,10]]},seats:{L1:22,L2:18},units:4},
+  {code:"HSS",name:"Humanities elective",secs:{L1:[[1,14],[3,14]],L2:[[0,15],[2,15]]},seats:{L1:9,L2:26},units:3}
+];
+const REQ_TEMPLATES={
+  bonafide:{label:"Bonafide certificate",steps:[["Requested","You"],["Details verified","SWD office"],["Awaiting signature","Associate Dean, SWD"],["Ready","Signed PDF here and in DigiLocker"]],eta:"Usually 2 working days"},
+  transcript:{label:"Official transcript",steps:[["Requested","You"],["Fee received","Accounts"],["Prepared and checked","Academic office (ARC)"],["Sent","Sealed copy posted, PDF here"]],eta:"Usually 5 working days"},
+  makeup:{label:"Makeup exam",steps:[["Requested","You"],["Reviewed by IC","Instructor-in-charge"],["Decision","Makeup date set or declined"]],eta:"Usually 3 days"},
+  leave:{label:"Leave",steps:[["Applied","You"],["Warden approval","Warden, Budh Bhawan"],["SWD approval","SWD office"],["Gate pass issued","QR in Wallet"]],eta:"Usually same day"},
+  complaint:{label:"Hostel complaint",steps:[["Raised","You"],["Assigned","Hostel maintenance"],["Visit scheduled","Technician"],["Fixed","Rate the fix"]],eta:"Usually 1–2 days"}
+};
+function defaults(){return{
+  signedIn:false,theme:"light",
+  dues:[{id:"d1",title:"Mess bill · December",note:"Mess 2 · due 30 Nov",amt:4850},{id:"d2",title:"Library late fee",note:"2 books, 4 days late",amt:200},{id:"d3",title:"Semester II fee",note:"Due 5 Jan · example amount",amt:262500}],
+  receipts:[{title:"Mess bill · November",amt:4720,date:"29 Oct 2026",via:"UPI",ref:"CT-88213"},{title:"Semester I fee",amt:262500,date:"18 Jul 2026",via:"Net banking",ref:"CT-77120"}],
+  requests:[
+    {id:"r101",type:"bonafide",title:"Bonafide certificate",detail:"Purpose: passport application",at:2,log:["Mon 24 Nov, 11:02 AM","Mon 24 Nov, 3:40 PM"],notes:[]},
+    {id:"r102",type:"leave",title:"Winter break leave",detail:"13 Dec → 2 Jan · Home, Jaipur",at:2,log:["Sat 22 Nov, 8:15 PM","Sun 23 Nov, 10:02 AM"],notes:[],leave:{from:"2026-12-13",to:"2027-01-02",dest:"Home, Jaipur"}},
+    {id:"r103",type:"makeup",title:"Makeup exam · CS F303 Quiz 2",detail:"Medical certificate attached",at:1,log:["Tue 25 Nov, 9:30 AM"],notes:[]},
+    {id:"r104",type:"complaint",title:"Fan not working · Room 2147",detail:"Electrical",at:4,log:["Fri 21 Nov, 7:40 PM","Fri 21 Nov, 8:05 PM","Sat 22 Nov, 9:00 AM","Sat 22 Nov, 10:15 AM"],notes:[]}
+  ],
+  reg:{picks:{"CS F363":"L1","CS F364":"L1","CS F372":"L1","HSS":"L1"},submitted:false},
+  ps:PS_STATIONS.map(s=>s.id),psSaved:false,
+  rsvp:{},grubs:{},seen:{},rating:{},calcCourse:"CS F301",calcTarget:"A-",mutes:{},parentAccess:true,seq:105
+};}
+let S;
+try{S=Object.assign(defaults(),JSON.parse(localStorage.getItem("clocktower-app")||"{}"));}catch(e){S=defaults();}
+function save(){try{localStorage.setItem("clocktower-app",JSON.stringify(S));}catch(e){}}
+
+/* ================= helpers ================= */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const inr=n=>"₹"+Number(n).toLocaleString("en-IN");
+const hr=h=>{const H=Math.floor(h),ap=H>=12?"PM":"AM",h12=((H+11)%12)+1;return h12+":00 "+ap;};
+const slug=c=>c.toLowerCase().replace(/[^a-z0-9]/g,"");
+const courseBySlug=s=>COURSES.find(c=>slug(c.code)===s);
+const KCOL=["#5B5FE0","#D9822B","#2E9C6A","#B04FA8"];
+function scored(c){return c.comps.filter(x=>x[2]!=null).reduce((a,x)=>a+x[2],0);}
+function maxSoFar(c){return c.comps.filter(x=>x[2]!=null).reduce((a,x)=>a+x[1],0);}
+function reqStatus(r){const t=REQ_TEMPLATES[r.type];if(r.cancelled)return["Cancelled","plain"];if(r.at>=t.steps.length)return[r.type==="complaint"?"Fixed":"Done","good"];if(r.at===0)return["Submitted","info"];return[t.steps[r.at][0],"warn"];}
+function openReqs(){return S.requests.filter(r=>!r.cancelled&&r.at<REQ_TEMPLATES[r.type].steps.length);}
+function stampNow(){const d=new Date();return d.toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"})+", "+d.toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"});}
+function toast(msg){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,3200);}
+function todaysClasses(){const out=[];COURSES.forEach(c=>c.slots.forEach(s=>{if(s[0]===TODAY_IDX)out.push({c,h:s[1],room:s[2],lab:/Lab/.test(s[2])});}));return out.sort((a,b)=>a.h-b.h);}
+
+/* ================= views ================= */
+const V={};
+V.today=()=>{
+  const cls=todaysClasses(),next=cls.find(x=>x.h>NOW_HOUR);
+  const due=S.dues.filter(d=>d.id==="d1")[0];
+  const leave=S.requests.find(r=>r.id==="r102");
+  const needs=[];
+  if(due)needs.push(`<div class="li"><span class="badge-sq" style="background:var(--marigold-soft);color:var(--warn)">₹</span><div><b>${esc(due.title)}</b><div class="small muted">${inr(due.amt)} · ${esc(due.note)}</div></div><a class="btn sm" href="#wallet">Pay</a></div>`);
+  if(!S.reg.submitted)needs.push(`<div class="li"><span class="badge-sq" style="background:var(--accent-soft);color:var(--accent)">REG</span><div><b>Sem II registration cart is open</b><div class="small muted">Submit preferences by 8 Dec. No first-come rush.</div></div><a class="btn sm ghost" href="#acad-reg">Open</a></div>`);
+  if(leave&&!leave.cancelled){const [st,cl]=reqStatus(leave);needs.push(`<div class="li"><span class="badge-sq" style="background:var(--good-soft);color:var(--good)">OUT</span><div><b>${esc(leave.title)}</b><div class="small muted">${esc(leave.detail)}</div></div><a class="pill ${cl}" href="#req-${leave.id}" style="text-decoration:none">${esc(st)}</a></div>`);}
+  if(!S.psSaved)needs.push(`<div class="li"><span class="badge-sq" style="background:var(--bad-soft);color:var(--bad)">PS</span><div><b>Rank your PS-I stations</b><div class="small muted">Closes 12 Dec</div></div><a class="btn sm ghost" href="#acad-ps">Rank</a></div>`);
+  return `<div class="page">
+    <div class="page-head"><div class="stack"><span class="eyebrow">Wednesday, 26 November</span><h1>Good morning, Aarav</h1></div></div>
+    <div class="stories" aria-label="Notices">${NOTICES.filter(n=>!S.mutes[n.src]).map((n,i)=>`<button class="story ${S.seen[n.id]?"seen":""}" type="button" data-act="story" data-i="${i}"><span class="ring">${n.src}</span>${esc(n.who.split(" ")[0])}</button>`).join("")}</div>
+    <div class="grid2">
+      <div class="col">
+        ${next?`<div class="card hero-card"><div class="row"><span class="eyebrow">Next · ${hr(next.h)}</span><span class="pill" style="background:rgba(255,255,255,.2);color:inherit">${next.lab?"Lab":"Lecture"}</span></div>
+          <h2>${esc(next.c.code)} · ${esc(next.c.name)}</h2><p class="muted">${esc(next.room)} · Section ${esc(next.c.sec)} · ${esc(next.c.ic)}</p>
+          <div class="row wrap" style="justify-content:flex-start"><button class="btn onhero sm" type="button" data-act="where" data-room="${esc(next.room)}">Directions</button><a class="btn onhero sm" href="#course-${slug(next.c.code)}">Course page</a></div></div>`:""}
+        <div class="banner"><span><b>Compre starts Fri 5 Dec.</b> Your first paper: CS F301, 9:00 AM, LTC 5104.</span><a class="btn sm ghost" href="#acad-courses">See all papers</a></div>
+        <div class="card"><div class="card-head"><h3>Needs you</h3><span class="pill plain">${needs.length}</span></div><div class="list">${needs.join("")||'<p class="muted">You are all caught up.</p>'}</div></div>
+      </div>
+      <div class="col">
+        <div class="card"><div class="card-head"><h3>Today's classes</h3><a class="small" href="#acad-courses">Week view</a></div>
+          <div class="list">${cls.map(x=>`<a class="li" href="#course-${slug(x.c.code)}" style="text-decoration:none"><span class="time">${hr(x.h)}</span><div><b>${esc(x.c.code)}</b> <span class="muted small">${x.lab?"Lab":""}</span><div class="small muted">${esc(x.c.name)}</div></div><span class="pill ${x.h<NOW_HOUR?"plain":"info"}">${esc(x.room)}</span></a>`).join("")}</div></div>
+        <div class="card"><div class="card-head"><h3>Mess now · Breakfast</h3><span class="mono small muted">7:30–9:30</span></div><p>${esc(MENU.Wed[0])}</p><div class="small muted">Lunch: ${esc(MENU.Wed[1])}</div><a class="btn sm ghost" href="#campus-mess" style="align-self:flex-start">Full menu & grubs</a></div>
+      </div>
+    </div></div>`;
+};
+
+function acadTabs(on){return `<nav class="subtabs">${[["acad-courses","Courses"],["acad-reg","Registration"],["acad-grades","Grades"],["acad-ps","Practice School"]].map(([h,l])=>`<a href="#${h}" class="${on===h?"on":""}">${l}</a>`).join("")}</nav>`;}
+V["acad-courses"]=()=>{
+  const rows=[];for(let h=9;h<=15;h++){rows.push(`<div>${h>12?h-12:h}${h>=12?"p":"a"}</div>`+DAYS.map((d,di)=>{let hit=null;COURSES.forEach((c,ci)=>c.slots.forEach(s=>{if(s[0]===di&&s[1]===h)hit={c,ci,s};}));return hit?`<div class="cell" style="background:${["#5B5FE0","#D9822B","#2E9C6A","#B04FA8","#3B8FB8"][hit.ci]};color:#fff">${hit.c.code.split(" ")[1]}</div>`:`<div class="cell"></div>`;}).join(""));}
+  return `<div class="page"><div class="page-head"><div class="stack"><span class="eyebrow">Semester I · 2026–27</span><h1>Academics</h1></div><button class="btn ghost sm" type="button" data-act="ics">Add to my calendar</button></div>
+    ${acadTabs("acad-courses")}
+    <div class="grid3">${COURSES.map(c=>{const p=Math.round(scored(c)/maxSoFar(c)*100);return `<a class="card link" href="#course-${slug(c.code)}"><div class="card-head"><span class="mono small">${esc(c.code)} · ${esc(c.sec)}</span><span class="pill info">${c.units} units</span></div><h3>${esc(c.name)}</h3><span class="small muted">${esc(c.ic)}</span><div class="row small"><span>So far ${scored(c)}/${maxSoFar(c)}</span><span class="mono">${p}%</span></div><div class="meter"><i style="width:${p}%"></i></div><span class="small muted">Compre: ${esc(c.compre)}</span></a>`;}).join("")}</div>
+    <div class="card"><h3>This week</h3><div class="tablewrap"><div class="ttgrid" style="min-width:420px"><div></div>${DAYS.map((d,i)=>`<div style="${i===TODAY_IDX?"color:var(--accent);font-weight:700":""}">${d}</div>`).join("")}${rows.join("")}</div></div></div>
+  </div>`;
+};
+V.course=(s)=>{
+  const c=courseBySlug(s);if(!c)return V.notfound();
+  return `<div class="page"><a href="#acad-courses" class="small">← All courses</a>
+    <div class="page-head"><div class="stack"><span class="eyebrow">${esc(c.code)} · Section ${esc(c.sec)} · ${c.units} units</span><h1>${esc(c.name)}</h1><p>${esc(c.ic)} (Instructor-in-charge)</p></div><button class="btn line sm" type="button" data-act="msgic" data-c="${esc(c.code)}">Message IC</button></div>
+    <div class="grid2"><div class="col">
+      <div class="card"><h3>Evaluation plan and your marks</h3><div class="tablewrap"><table><thead><tr><th>Component</th><th class="r">Weight</th><th class="r">Your marks</th></tr></thead><tbody>
+        ${c.comps.map(x=>`<tr><td>${esc(x[0])}</td><td class="r mono">${x[1]}</td><td class="r mono">${x[2]==null?'<span class="pill warn">Upcoming</span>':x[2]+" / "+x[1]}</td></tr>`).join("")}
+        <tr><td><b>Total so far</b></td><td class="r mono">${maxSoFar(c)}</td><td class="r mono"><b>${scored(c)} / ${maxSoFar(c)}</b></td></tr></tbody></table></div>
+        <a class="btn ghost sm" style="align-self:flex-start" href="#acad-grades" data-act="setcalc" data-c="${esc(c.code)}">What do I need in compre?</a></div>
+      <div class="card"><h3>Announcements</h3>${c.posts.length?`<div class="list">${c.posts.map(p=>`<div class="li nolead"><span>${esc(p[0])}</span><span class="small muted">${esc(p[1])}</span></div>`).join("")}</div>`:'<p class="muted">No announcements yet.</p>'}</div>
+    </div><div class="col">
+      <div class="card"><h3>Compre</h3><p><b>${esc(c.compre)}</b></p><p class="small muted">Seat: Row D, seat 14 (sample). Bring your ID card.</p></div>
+      <div class="card"><h3>Class times</h3><div class="list">${c.slots.map(s=>`<div class="li nolead"><span>${DAYS[s[0]]} · ${hr(s[1])}</span><button class="pill info" style="border:0" type="button" data-act="where" data-room="${esc(s[2])}">${esc(s[2])}</button></div>`).join("")}</div></div>
+      <div class="card"><h3>Course materials</h3><div class="list"><div class="li nolead"><span>Handout (PDF)</span><span class="pill plain">Sample</span></div><div class="li nolead"><span>Lecture slides</span><span class="pill plain">Sample</span></div></div></div>
+    </div></div></div>`;
+};
+V["acad-reg"]=()=>{
+  const occ={};REG.forEach((c,ci)=>c.secs[S.reg.picks[c.code]].forEach(([d,h])=>{(occ[d+"-"+h]=occ[d+"-"+h]||[]).push(ci);}));
+  const clashes=Object.entries(occ).filter(([k,v])=>v.length>1);
+  let grid='<div></div>'+DAYS.map(d=>`<div>${d}</div>`).join("");
+  for(let h=9;h<=15;h++){grid+=`<div>${h>12?h-12:h}${h>=12?"p":"a"}</div>`+DAYS.map((d,di)=>{const o=occ[di+"-"+h];return !o?'<div class="cell"></div>':o.length>1?'<div class="cell clash">clash</div>':`<div class="cell k${o[0]}">${REG[o[0]].code.split(" ").pop()}</div>`;}).join("");}
+  const units=REG.reduce((a,c)=>a+c.units,0);
+  let status;
+  if(S.reg.submitted)status=`<div class="status ok">Preferences submitted. Allotment results on 10 Dec. You can still change them until 8 Dec.</div>`;
+  else if(clashes.length){const names=[...new Set(clashes.flatMap(c=>c[1]))].map(i=>REG[i].code).join(" and ");status=`<div class="status no">Clash between ${names} on ${clashes.map(c=>{const [d,h]=c[0].split("-");return DAYS[d]+" "+hr(+h);}).join(", ")}. Switch a section to submit.</div>`;}
+  else status=`<div class="status ok">No clashes. ${REG.length} courses · ${units} units. Ready to submit.</div>`;
+  return `<div class="page"><div class="page-head"><div class="stack"><span class="eyebrow">Semester II · 2026–27</span><h1>Registration cart</h1><p>Window 2–8 Dec. Everyone who submits in the window is allotted together. Clicking first gives no advantage.</p></div></div>
+    ${acadTabs("acad-reg")}
+    <div class="grid2"><div class="col">
+      ${REG.map((c,ci)=>`<div class="card"><div class="card-head"><b><span class="sw k${ci}b"></span>${esc(c.code)} · ${esc(c.name)}</b><span class="small muted">${c.units} units</span></div>
+        <div class="secbtns">${Object.keys(c.secs).map(k=>{const on=S.reg.picks[c.code]===k;return `<button type="button" data-act="pick" data-c="${esc(c.code)}" data-s="${k}" aria-pressed="${on}" style="${on?"background:"+KCOL[ci]:""}">${k} · ${c.secs[k].map(([d,h])=>DAYS[d]+" "+(h>12?h-12:h)).join(", ")} · ${c.seats[k]} seats</button>`;}).join("")}</div></div>`).join("")}
+    </div><div class="col">
+      <div class="card"><h3>Your week</h3><div class="ttgrid">${grid}</div></div>
+      ${status}
+      <div class="row wrap"><button class="btn" type="button" data-act="regsubmit" ${clashes.length?"disabled":""}>${S.reg.submitted?"Update preferences":"Submit preferences"}</button>${S.reg.submitted?'<button class="btn line" type="button" data-act="regwithdraw">Withdraw</button>':""}</div>
+      <p class="small muted">Seat counts and rules are examples. Real allotment would use the institute's priority rules (year, core vs elective, CGPA).</p>
+    </div></div></div>`;
+};
+V["acad-grades"]=()=>{
+  const c=COURSES.find(x=>x.code===S.calcCourse)||COURSES[0];
+  const so=scored(c),cw=c.comps.find(x=>x[2]==null)[1],need=CUTOFFS[S.calcTarget]-so;
+  let msg,cls;
+  if(need<=0){msg=`You already have enough for ${S.calcTarget} on current marks.`;cls="ok";}
+  else if(need>cw){msg=`${S.calcTarget} isn't reachable: you'd need ${need} out of ${cw}.`;cls="no";}
+  else{msg=`You need about ${need} / ${cw} in compre (${Math.round(need/cw*100)}%) for ${S.calcTarget}.`;cls=need/cw>0.8?"no":"ok";}
+  const W=360,H=170,bw=46,gap=(W-40-bw*SGPA.length)/(SGPA.length);
+  const bars=SGPA.map(([l,v],i)=>{const x=40+gap/2+i*(bw+gap),y=20+(10-v)/10*120*1.6-0, hh=(v-5)/5*120;const yy=140-hh;return `<rect x="${x}" y="${yy}" width="${bw}" height="${hh}" rx="6" fill="${i===SGPA.length-1?"var(--accent)":"var(--accent-soft)"}"/><text x="${x+bw/2}" y="${yy-6}" text-anchor="middle" font-size="12" fill="var(--ink)" font-family="JetBrains Mono, monospace">${v}</text><text x="${x+bw/2}" y="158" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="JetBrains Mono, monospace">${l}</text>`;}).join("");
+  const grid=[5,7.5,10].map(v=>{const y=140-(v-5)/5*120;return `<line x1="34" x2="${W}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="28" y="${y+4}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="JetBrains Mono, monospace">${v}</text>`;}).join("");
+  return `<div class="page"><div class="page-head"><div class="stack"><span class="eyebrow">Academic record</span><h1>Grades</h1></div></div>
+    ${acadTabs("acad-grades")}
+    <div class="grid2"><div class="col">
+      <div class="card"><div class="row wrap"><div class="stat"><span class="eyebrow">CGPA</span><b class="num">${STUDENT.cgpa.toFixed(2)}</b></div><div class="stat"><span class="eyebrow">Units done</span><b class="num">${STUDENT.units}</b></div><div class="stat"><span class="eyebrow">Standing</span><b style="font-size:1.1rem;color:var(--good)">Good</b></div></div>
+        <span class="eyebrow">SGPA by semester</span><svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="SGPA by semester">${grid}${bars}</svg></div>
+      <div class="card"><h3>Past grades · 2-2</h3><div class="tablewrap"><table><thead><tr><th>Course</th><th class="r">Units</th><th class="r">Grade</th></tr></thead><tbody>
+        <tr><td>CS F211 · Data Structures & Algorithms</td><td class="r mono">4</td><td class="r mono">A</td></tr>
+        <tr><td>CS F212 · Database Systems</td><td class="r mono">4</td><td class="r mono">A-</td></tr>
+        <tr><td>CS F213 · Object Oriented Programming</td><td class="r mono">4</td><td class="r mono">A</td></tr>
+        <tr><td>CS F214 · Logic in Computer Science</td><td class="r mono">3</td><td class="r mono">B</td></tr>
+        <tr><td>MATH F211 · Mathematics III</td><td class="r mono">3</td><td class="r mono">A-</td></tr></tbody></table></div><p class="small muted">Sample record.</p></div>
+    </div><div class="col">
+      <div class="card"><h3>What do I need in compre?</h3>
+        <label class="field">Course<select id="calcCourse" data-change="calccourse">${COURSES.map(x=>`<option value="${esc(x.code)}" ${x.code===c.code?"selected":""}>${esc(x.code)} · ${esc(x.name)}</option>`).join("")}</select></label>
+        <div class="list">${c.comps.map(x=>`<div class="li nolead"><span>${esc(x[0])} (${x[1]})</span><span class="mono">${x[2]==null?"?":x[2]}</span></div>`).join("")}</div>
+        <span class="small" style="font-weight:600">Target grade</span>
+        <div class="segment">${Object.keys(CUTOFFS).map(g=>`<button type="button" data-act="target" data-g="${g}" aria-pressed="${g===S.calcTarget}">${g}</button>`).join("")}</div>
+        <div class="status ${cls}">${msg}</div>
+        <p class="small muted">Uses last year's cutoffs shared by the IC (example values). Grading at BITS is relative, so treat this as a guide.</p></div>
+    </div></div></div>`;
+};
+V["acad-ps"]=()=>{
+  const list=S.ps.map(id=>PS_STATIONS.find(s=>s.id===id));
+  return `<div class="page"><div class="page-head"><div class="stack"><span class="eyebrow">PS-I · Summer 2027</span><h1>Practice School</h1><p>Rank the stations you'd accept. Allotment uses your rank and CGPA. Closes 12 Dec.</p></div>${S.psSaved?'<span class="pill good">Ranking saved</span>':'<span class="pill warn">Not saved</span>'}</div>
+    ${acadTabs("acad-ps")}
+    <div class="grid2"><div class="col">
+      ${list.map((s,i)=>`<div class="rank"><span class="n">${i+1}</span><div><b>${esc(s.city)}</b> <span class="muted">· ${esc(s.field)}</span><div class="small muted">${s.seats} seats · last year's lowest CGPA ${s.cut} · rated ${s.rating}/5 · stipend: ${s.stipend}</div></div>
+        <div class="mv"><button type="button" data-act="psmove" data-i="${i}" data-d="-1" aria-label="Move ${esc(s.city)} up" ${i===0?"disabled":""}>▲</button><button type="button" data-act="psmove" data-i="${i}" data-d="1" aria-label="Move ${esc(s.city)} down" ${i===list.length-1?"disabled":""}>▼</button></div></div>`).join("")}
+      <button class="btn" type="button" data-act="pssave" style="align-self:flex-start">Save ranking</button>
+    </div><div class="col">
+      <div class="card"><h3>Your chances at #1</h3><p>Your CGPA <b>${STUDENT.cgpa}</b> vs last year's lowest allotted <b>${list[0].cut}</b>.</p>${STUDENT.cgpa>=list[0].cut?'<div class="status ok">Above last year\'s cutoff.</div>':'<div class="status no">Below last year\'s cutoff. Keep good backups in your top 3.</div>'}<p class="small muted">Station details are illustrative.</p></div>
+    </div></div></div>`;
+};
+
+function campusTabs(on){return `<nav class="subtabs">${[["campus-leave","Leave"],["campus-mess","Mess"],["campus-hostel","Hostel"],["campus-events","Events"]].map(([h,l])=>`<a href="#${h}" class="${on===h?"on":""}">${l}</a>`).join("")}</nav>`;}
+V["campus-leave"]=()=>{
+  const leaves=S.requests.filter(r=>r.type==="leave");
+  return `<div class="page"><div class="page-head"><div class="stack"><span class="eyebrow">${esc(STUDENT.hostel)}</span><h1>Campus</h1></div></div>
+    ${campusTabs("campus-leave")}
+    <div class="grid2"><div class="col"><div class="card"><h3>Apply for leave</h3>
+      <form class="form" data-form="leave">
+        <div class="segment" role="group" aria-label="Leave type"><button type="button" data-act="leavetype" data-v="Home" aria-pressed="true">Home</button><button type="button" data-act="leavetype" data-v="Outstation">Outstation</button><button type="button" data-act="leavetype" data-v="Medical">Medical</button></div>
+        <input type="hidden" id="leaveType" name="type" value="Home">
+        <div class="form-row"><label class="field">Leaving on<input type="date" id="leaveFrom" name="from" value="2026-12-13" required></label><label class="field">Back on<input type="date" id="leaveTo" name="to" value="2027-01-02" required></label></div>
+        <label class="field">Going to<input type="text" id="leaveDest" name="dest" value="Home, Jaipur" required></label>
+        <label class="field">Reason<span class="hint">Optional for winter break</span><textarea id="leaveReason" name="reason" placeholder="e.g. winter break"></textarea></label>
+        <label class="check"><input type="checkbox" id="leaveParent" name="parent" checked> Notify my parent when approved</label>
+        <button class="btn" type="submit">Submit leave request</button>
+      </form></div></div>
+    <div class="col"><div class="card"><h3>Your leave requests</h3>${leaves.length?`<div class="list">${leaves.map(r=>{const [st,cl]=reqStatus(r);return `<a class="li nolead" href="#req-${r.id}" style="text-decoration:none"><div><b>${esc(r.title)}</b><div class="small muted">${esc(r.detail)}</div></div><span class="pill ${cl}">${esc(st)}</span></a>`;}).join("")}</div>`:'<p class="muted">No leave requests yet.</p>'}</div>
+      <div class="card"><h3>How it works</h3><p class="small muted">Your warden approves on their phone, then SWD. Once approved, a QR gate pass appears in Wallet and security scans it at the gate.</p></div></div></div></div>`;
+};
+V["campus-mess"]=()=>{
+  const days=Object.keys(MENU);
+  return `<div class="page"><div class="page-head"><div class="stack"><span class="eyebrow">${esc(STUDENT.mess)}</span><h1>Campus</h1></div></div>
+    ${campusTabs("campus-mess")}
+    <div class="grid2"><div class="col"><div class="card"><h3>This week's menu</h3><div class="tablewrap"><table><thead><tr><th>Day</th><th>Breakfast</th><th>Lunch</th><th>Dinner</th></tr></thead><tbody>
+      ${days.map(d=>`<tr style="${d==="Wed"?"background:var(--accent-soft)":""}"><td><b>${d}</b>${d==="Wed"?' <span class="pill info">Today</span>':""}</td>${MENU[d].map(m=>`<td class="small">${esc(m)}</td>`).join("")}</tr>`).join("")}</tbody></table></div></div></div>
+    <div class="col">
+      <div class="card"><h3>Grubs</h3><div class="list">${GRUBS.map(g=>`<div class="li nolead"><div><b>${esc(g.name)}</b><div class="small muted">${esc(g.when)} · ${inr(g.price)}, added to mess bill</div></div>${S.grubs[g.id]?`<button class="btn sm line" type="button" data-act="grub" data-id="${g.id}">Cancel</button>`:`<button class="btn sm" type="button" data-act="grub" data-id="${g.id}">Sign up</button>`}</div>`).join("")}</div></div>
+      <div class="card"><h3>Rate today's breakfast</h3><div class="segment">${[1,2,3,4,5].map(n=>`<button type="button" data-act="rate" data-n="${n}" aria-pressed="${S.rating.wed===n}">${"★".repeat(n)}</button>`).join("")}</div><p class="small muted">Ratings go to the mess committee each week.</p></div>
+    </div></div></div>`;
+};
+V["campus-hostel"]=()=>{
+  const cs=S.requests.filter(r=>r.type==="complaint");
+  return `<div class="page"><div class="page-head"><div class="stack"><span class="eyebrow">${esc(STUDENT.hostel)}</span><h1>Campus</h1></div></div>
+    ${campusTabs("campus-hostel")}
+    <div class="grid2"><div class="col"><div class="card"><h3>Raise a complaint</h3>
+      <form class="form" data-form="complaint">
+        <label class="field">What's wrong?<select id="cCat" name="cat"><option>Electrical</option><option>Plumbing</option><option>Carpentry</option><option>Wi-Fi / LAN</option><option>Cleaning</option><option>Other</option></select></label>
+        <label class="field">Room<input id="cRoom" name="room" value="2147" required></label>
+        <label class="field">Describe it<textarea id="cDesc" name="desc" placeholder="e.g. tube light flickering" required></textarea></label>
+        <label class="field">Photo<span class="hint">Optional. Stays on this device in the prototype.</span><input id="cPhoto" type="file" accept="image/*"></label>
+        <button class="btn" type="submit">Raise complaint</button>
+      </form></div></div>
+    <div class="col"><div class="card"><h3>Your complaints</h3><div class="list">${cs.map(r=>{const [st,cl]=reqStatus(r);return `<a class="li nolead" href="#req-${r.id}" style="text-decoration:none"><div><b>${esc(r.title)}</b><div class="small muted">${esc(r.detail)}</div></div><span class="pill ${cl}">${esc(st)}</span></a>`;}).join("")||'<p class="muted">None yet.</p>'}</div></div></div></div></div>`;
+};
+V["campus-events"]=()=>`<div class="page"><div class="page-head"><div class="stack"><span class="eyebrow">Clubs, departments, fests</span><h1>Campus</h1></div></div>
+    ${campusTabs("campus-events")}
+    <div class="grid3">${EVENTS.map(e=>`<div class="card"><div class="card-head"><span class="pill plain">${esc(e.org)}</span><span class="small mono">${e.price?inr(e.price):"Free"}</span></div><h3>${esc(e.name)}</h3><span class="small muted">${esc(e.when)} · ${esc(e.where)}</span>
+      ${S.rsvp[e.id]?`<div class="row"><span class="pill good">Going · pass in Wallet</span><button class="btn sm line" type="button" data-act="rsvp" data-id="${e.id}">Cancel</button></div>`:`<button class="btn sm" type="button" data-act="rsvp" data-id="${e.id}" style="align-self:flex-start">${e.price?"Get pass · "+inr(e.price):"RSVP"}</button>`}</div>`).join("")}</div>
+    <div class="card"><h3>Notice sources</h3><p class="small muted">Mute a source to hide its stories on Today. Academic and SWD notices can't be muted.</p><div class="list">${[...new Set(NOTICES.map(n=>n.src))].map(src=>{const n=NOTICES.find(x=>x.src===src),locked=src==="AUGSD"||src==="SWD";return `<div class="li nolead"><span><b>${esc(n.who)}</b></span>${locked?'<span class="pill plain">Always on</span>':`<button class="btn sm ${S.mutes[src]?"":"line"}" type="button" data-act="mute" data-src="${src}">${S.mutes[src]?"Unmute":"Mute"}</button>`}</div>`;}).join("")}</div></div>
+  </div>`;
+
+V.wallet=()=>{
+  const sel=V.wallet.sel||(V.wallet.sel=new Set(["d1"]));
+  [...sel].forEach(id=>{if(!S.dues.find(d=>d.id===id))sel.delete(id);});
+  const total=S.dues.filter(d=>sel.has(d.id)).reduce((a,d)=>a+d.amt,0);
+  const passes=[];
+  S.requests.filter(r=>r.type==="leave"&&!r.cancelled&&r.at>=4).forEach(r=>passes.push({t:"Gate pass",d:r.detail,id:r.id}));
+  EVENTS.filter(e=>S.rsvp[e.id]).forEach(e=>passes.push({t:e.name,d:e.when+" · "+e.where,id:e.id}));
+  return `<div class="page"><div class="page-head"><div class="stack"><span class="eyebrow">Fees, bills, passes</span><h1>Wallet</h1></div><a class="btn ghost sm" href="#wallet-id">Show ID card</a></div>
+    <div class="grid2"><div class="col">
+      <div class="card hero-card"><span class="eyebrow">Selected to pay</span><span style="font-family:var(--display);font-size:2.2rem;font-weight:800" class="num">${inr(total)}</span><span class="muted small">UPI · Mess autopay is off</span></div>
+      <div class="card"><div class="card-head"><h3>Dues</h3><span class="pill ${S.dues.length?"warn":"good"}">${S.dues.length?S.dues.length+" open":"All paid"}</span></div>
+        ${S.dues.length?`<div class="list">${S.dues.map(d=>`<label class="li" style="cursor:pointer"><input type="checkbox" id="due-${d.id}" data-change="due" data-id="${d.id}" ${sel.has(d.id)?"checked":""} style="width:18px;height:18px;accent-color:var(--accent)"><div><b>${esc(d.title)}</b><div class="small muted">${esc(d.note)}</div></div><span class="amt">${inr(d.amt)}</span></label>`).join("")}</div>
+        <button class="btn block" type="button" data-act="pay" ${total?"":"disabled"}>Pay ${inr(total)} with UPI</button>`:'<p class="muted">Nothing to pay right now.</p>'}</div>
+    </div><div class="col">
+      <div class="card"><h3>Passes</h3>${passes.length?`<div class="list">${passes.map(p=>`<div class="li nolead"><div><b>${esc(p.t)}</b><div class="small muted">${esc(p.d)}</div></div><button class="btn sm ghost" type="button" data-act="showpass" data-t="${esc(p.t)}" data-d="${esc(p.d)}">Show QR</button></div>`).join("")}</div>`:'<p class="muted small">Event passes and your gate pass show up here.</p>'}</div>
+      <div class="card"><h3>Receipts</h3><div class="list">${S.receipts.map(r=>`<div class="li nolead"><div><b>${esc(r.title)}</b><div class="small muted">${esc(r.date)} · ${esc(r.via)} · ${esc(r.ref)}</div></div><span class="amt">${inr(r.amt)}</span></div>`).join("")}</div></div>
+      <div class="card"><div class="card-head"><h3>MCN scholarship</h3><span class="pill info">Under review</span></div><p class="small muted">Income documents verified on 20 Nov. Result expected by 15 Dec.</p></div>
+    </div></div></div>`;
+};
+V["wallet-id"]=()=>`<div class="page"><a href="#wallet" class="small">← Wallet</a><div class="page-head"><div class="stack"><span class="eyebrow">Works offline</span><h1>ID card</h1></div></div>
+  <div class="idcard"><div class="stack"><span class="eyebrow">BITS Pilani · Pilani campus</span><b style="font-family:var(--display);font-size:1.5rem">${esc(STUDENT.name)}</b><span class="mono">${esc(STUDENT.id)}</span><span>${esc(STUDENT.prog)}</span><span style="opacity:.85">${esc(STUDENT.hostel)}</span><span class="eyebrow" style="margin-top:8px">Sample card · prototype</span></div><canvas id="qr" width="118" height="118" aria-label="Sample QR code"></canvas></div>
+  <p class="small muted">Security, library and mess scan the QR. Brightness goes up automatically on a real phone.</p></div>`;
+
+V.inbox=()=>{
+  const open=openReqs(),closed=S.requests.filter(r=>!open.includes(r));
+  const row=r=>{const [st,cl]=reqStatus(r);return `<a class="li" href="#req-${r.id}" style="text-decoration:none"><span class="badge-sq" style="background:var(--sunk)">${{bonafide:"DOC",transcript:"DOC",makeup:"EXM",leave:"OUT",complaint:"FIX"}[r.type]}</span><div><b>${esc(r.title)}</b><div class="small muted">${esc(r.detail)}</div></div><span class="pill ${cl}">${esc(st)}</span></a>`;};
+  return `<div class="page"><div class="page-head"><div class="stack"><span class="eyebrow">Requests and messages</span><h1>Inbox</h1></div><button class="btn" type="button" data-act="newreq">New request</button></div>
+    <div class="grid2"><div class="col"><div class="card"><div class="card-head"><h3>In progress</h3><span class="pill plain">${open.length}</span></div>${open.length?`<div class="list">${open.map(row).join("")}</div>`:'<p class="muted">Nothing in progress.</p>'}</div>
+      <div class="card"><h3>Finished</h3>${closed.length?`<div class="list">${closed.map(row).join("")}</div>`:'<p class="muted">Nothing yet.</p>'}</div></div>
+    <div class="col"><div class="card"><h3>Every request is tracked</h3><p class="small muted">Each request shows who has it now and how long that step usually takes. A step that runs late is escalated automatically.</p></div></div></div></div>`;
+};
+V.req=(id)=>{
+  const r=S.requests.find(x=>x.id===id);if(!r)return V.notfound();
+  const t=REQ_TEMPLATES[r.type],[st,cl]=reqStatus(r),done=r.at>=t.steps.length;
+  return `<div class="page"><a href="#inbox" class="small">← Inbox</a>
+    <div class="page-head"><div class="stack"><span class="eyebrow">${esc(t.label)} · #${esc(r.id.toUpperCase())}</span><h1>${esc(r.title)}</h1><p>${esc(r.detail)}</p></div><span class="pill ${cl}">${esc(st)}</span></div>
+    <div class="grid2"><div class="col"><div class="card">
+      ${!done&&!r.cancelled?`<div class="status info">Now with: ${esc(t.steps[r.at][1])} · ${esc(t.eta)}</div>`:""}
+      <ol class="steps">${t.steps.map((s,i)=>`<li class="${i<r.at?"done":i===r.at&&!r.cancelled?"now":""}"><span class="b">${i<r.at?"✓":""}</span><div><b>${esc(s[0])}</b><span>${i<r.at?esc(r.log[i]||"Done"):esc(s[1])}</span></div></li>`).join("")}</ol>
+      ${r.notes.length?`<div class="list">${r.notes.map(n=>`<div class="li nolead"><span>${esc(n.text)}</span><span class="small muted">${esc(n.when)}</span></div>`).join("")}</div>`:""}
+      ${!done&&!r.cancelled?`<form class="row" data-form="note" data-id="${r.id}"><label class="field" style="flex:1"><span class="sr" hidden>Message</span><input id="note-${r.id}" name="note" placeholder="Add a note for the office" required></label><button class="btn sm" type="submit">Send</button></form>`:""}
+    </div></div>
+    <div class="col">
+      ${!done&&!r.cancelled?`<div class="card"><h3>Demo controls</h3><p class="small muted">Move the request forward to see what the student sees at each step.</p><button class="btn ghost" type="button" data-act="advance" data-id="${r.id}">Move to next step</button></div>
+      <div class="card"><h3>Cancel request</h3>${V.req.confirm===r.id?`<p class="small">Cancel this request? This can't be undone.</p><div class="row wrap" style="justify-content:flex-start"><button class="btn danger" type="button" data-act="cancelreq" data-id="${r.id}">Yes, cancel it</button><button class="btn line" type="button" data-act="keepreq">Keep it</button></div>`:`<button class="btn line" type="button" data-act="askcancel" data-id="${r.id}">Cancel request</button>`}</div>`:""}
+      ${done&&r.type==="leave"?`<div class="card"><h3>Gate pass ready</h3><a class="btn" href="#wallet">Open in Wallet</a></div>`:""}
+      ${done&&(r.type==="bonafide"||r.type==="transcript")?`<div class="card"><h3>Document ready</h3><p class="small muted">Signed PDF (sample). Also sent to DigiLocker.</p></div>`:""}
+    </div></div></div>`;
+};
+V.notfound=()=>`<div class="page"><div class="empty"><h2>Page not found</h2><p>That page doesn't exist in the prototype. <a href="#today">Go to Today</a></p></div></div>`;
+
+/* ================= router ================= */
+function route(){
+  document.documentElement.setAttribute("data-theme",S.theme);
+  $$("[data-theme-label]").forEach(e=>e.textContent=S.theme==="dark"?"Light mode":"Dark mode");
+  $("#signin").hidden=S.signedIn;
+  const h=(location.hash||"#today").slice(1);
+  let html,tab;
+  if(h.startsWith("course-")){html=V.course(h.slice(7));tab="acad";}
+  else if(h.startsWith("req-")){html=V.req(h.slice(4));tab="inbox";}
+  else if(V[h]&&h!=="course"&&h!=="req"&&h!=="notfound"){html=V[h]();tab=h.split("-")[0];}
+  else{html=V.notfound();tab="";}
+  $("#main").innerHTML=html;
+  $$("[data-tab]").forEach(a=>a.classList.toggle("on",a.dataset.tab===tab));
+  const n=openReqs().length;$$("[data-inbox-count]").forEach(e=>{e.textContent=n;e.hidden=!n;});
+  if(h==="wallet-id")drawQR($("#qr"),STUDENT.id);
+  document.title=({today:"Today",inbox:"Inbox",wallet:"Wallet",acad:"Academics",campus:"Campus"}[tab]||"Clocktower")+" · Clocktower";
+}
+let lastHash=location.hash;
+window.addEventListener("hashchange",()=>{route();if(location.hash!==lastHash){window.scrollTo(0,0);lastHash=location.hash;}});
+
+/* ================= QR (decorative) ================= */
+function drawQR(cv,seed){if(!cv)return;const x=cv.getContext("2d"),n=25,s=cv.width/n;let h=0;for(const ch of seed)h=(h*31+ch.charCodeAt(0))>>>0;
+  x.fillStyle="#fff";x.fillRect(0,0,cv.width,cv.height);x.fillStyle="#111";
+  const rnd=()=>{h^=h<<13;h>>>=0;h^=h>>17;h^=h<<5;h>>>=0;return h/4294967296;};
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++){if(rnd()>.52)x.fillRect(i*s,j*s,s,s);}
+  [[0,0],[n-7,0],[0,n-7]].forEach(([a,b])=>{x.fillStyle="#111";x.fillRect(a*s,b*s,7*s,7*s);x.fillStyle="#fff";x.fillRect((a+1)*s,(b+1)*s,5*s,5*s);x.fillStyle="#111";x.fillRect((a+2)*s,(b+2)*s,3*s,3*s);});}
+
+/* ================= modals ================= */
+function modal(html,cls){const o=$("#overlay");o.innerHTML=`<div class="modal ${cls||""}" role="dialog" aria-modal="true">${html}</div>`;o.hidden=false;const f=o.querySelector("input,button,select");f&&f.focus();}
+function closeModal(){const o=$("#overlay");o.hidden=true;o.innerHTML="";}
+$("#overlay").addEventListener("click",e=>{if(e.target.id==="overlay")closeModal();});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&!$("#overlay").hidden)closeModal();
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();openPalette();}
+  if(!$("#overlay").hidden&&$("#overlay .storyview")){if(e.key==="ArrowRight")storyStep(1);if(e.key==="ArrowLeft")storyStep(-1);}
+});
+let storyI=0;
+function storyList(){return NOTICES.filter(n=>!S.mutes[n.src]);}
+function showStory(i){const L=storyList();if(i<0||i>=L.length){closeModal();route();return;}storyI=i;const n=L[i];S.seen[n.id]=true;save();
+  const o=$("#overlay");o.innerHTML=`<div class="storyview" role="dialog" aria-modal="true" aria-label="Notice from ${esc(n.who)}"><div class="bars">${L.map((x,j)=>`<i class="${j<=i?"on":""}"></i>`).join("")}</div>
+    <div class="src"><span class="ring">${n.src}</span><div><b>${esc(n.who)}</b><div style="font-size:.75rem;opacity:.7">${esc(n.when)}</div></div><button class="x" type="button" data-act="close" aria-label="Close" style="margin-left:auto;background:#ffffff26;color:#fff">✕</button></div>
+    <div class="nav"><button type="button" data-act="storyprev" aria-label="Previous notice"></button><button type="button" data-act="storynext" aria-label="Next notice"></button></div>
+    <div class="body"><h2>${esc(n.title)}</h2><p style="opacity:.85">${esc(n.body)}</p><p style="font-size:.75rem;opacity:.6">Tap the right side for the next notice</p></div></div>`;o.hidden=false;}
+function storyStep(d){showStory(storyI+d);}
+
+const PAL=[
+  ["Today","Home","#today"],["Pay mess bill","Wallet","#wallet"],["Apply for leave","Campus","#campus-leave"],["Registration cart","Academics","#acad-reg"],
+  ["What do I need in compre?","Grades","#acad-grades"],["Grades and CGPA","Academics","#acad-grades"],["PS-I station ranking","Academics","#acad-ps"],["Mess menu","Campus","#campus-mess"],
+  ["Grub signups","Campus","#campus-mess"],["Raise hostel complaint","Campus","#campus-hostel"],["Events and RSVPs","Campus","#campus-events"],["ID card","Wallet","#wallet-id"],
+  ["Request bonafide certificate","New request","act:bonafide"],["Request transcript","New request","act:transcript"],["Request makeup exam","New request","act:makeup"],["Inbox","Requests","#inbox"],["Design notes","About","index.html"],
+  ...COURSES.map(c=>[c.code+" · "+c.name,"Course","#course-"+slug(c.code)]),
+  ["F102","Room · FD-I, ground floor","room:F102"],["F105","Room · FD-I, ground floor","room:F105"],["G104","Room · FD-II, ground floor","room:G104"],["LTC 5101","Room · Lecture Theatre Complex","room:LTC 5101"],["NAB 6120","Room · New Academic Block","room:NAB 6120"],["SWD office","Office · open 9 AM–5 PM","room:SWD office"],["Medical Centre","Campus · open 24 hours","room:Medical Centre"]
+];
+let palSel=0,palItems=[];
+function openPalette(){modal(`<input id="palq" type="text" placeholder="Search courses, rooms, actions…" aria-label="Search" autocomplete="off"><ul id="palres"></ul>`,"palette");const q=$("#palq");q.addEventListener("input",()=>{palSel=0;renderPal();});q.addEventListener("keydown",e=>{if(e.key==="ArrowDown"){palSel=Math.min(palSel+1,palItems.length-1);renderPal();e.preventDefault();}if(e.key==="ArrowUp"){palSel=Math.max(palSel-1,0);renderPal();e.preventDefault();}if(e.key==="Enter"&&palItems[palSel])goPal(palItems[palSel][2]);});palSel=0;renderPal();}
+function renderPal(){const q=($("#palq").value||"").toLowerCase().trim();palItems=PAL.filter(p=>!q||(p[0]+" "+p[1]).toLowerCase().includes(q)).slice(0,10);
+  $("#palres").innerHTML=palItems.length?palItems.map((p,i)=>`<li><button type="button" class="${i===palSel?"on":""}" data-act="palgo" data-to="${esc(p[2])}">${esc(p[0])}<span>${esc(p[1])}</span></button></li>`).join(""):'<li class="muted" style="padding:12px">No matches. Try "leave", "mess" or a course code.</li>';}
+function goPal(to){closeModal();if(to.startsWith("act:"))newReq(to.slice(4));else if(to.startsWith("room:"))whereIs(to.slice(5));else if(to==="index.html")location.href=to;else location.hash=to;}
+const ROOMS={"F102":"FD-I building, ground floor, east wing. About 4 minutes from Budh Bhawan.","F105":"FD-I building, ground floor, east wing.","G104":"FD-II building, ground floor, next to the CSIS department.","LTC 5101":"Lecture Theatre Complex, first floor.","LTC 5103":"Lecture Theatre Complex, first floor.","LTC 5104":"Lecture Theatre Complex, first floor.","NAB 6120":"New Academic Block, first floor.","CC Lab 2":"Computer Centre, second floor.","SWD office":"Main building, ground floor. Open 9 AM–5 PM on working days.","Medical Centre":"Near the main gate. Open 24 hours."};
+function whereIs(room){modal(`<div class="modal-head"><h2>${esc(room)}</h2><button class="x" type="button" data-act="close" aria-label="Close">✕</button></div><p>${esc(ROOMS[room]||"Location details coming soon.")}</p><div class="empty small">Map view would show walking directions here. Locations are approximate in this prototype.</div>`);}
+
+function newReq(type){
+  const forms={
+    bonafide:`<label class="field">Purpose<select id="rqPurpose" name="purpose"><option>Passport application</option><option>Bank account / loan</option><option>Scholarship</option><option>Visa</option><option>Internship</option><option>Other</option></select></label>`,
+    transcript:`<label class="field">Copies<input id="rqCopies" name="copies" type="number" min="1" max="10" value="2"></label><label class="field">Send to<input id="rqTo" name="to" placeholder="University or address" required></label><p class="small muted">Fee of ₹500 per copy is added to Wallet.</p>`,
+    makeup:`<label class="field">Course<select id="rqCourse" name="course">${COURSES.map(c=>`<option>${esc(c.code)}</option>`).join("")}</select></label><label class="field">Evaluation missed<input id="rqEval" name="eval" placeholder="e.g. Quiz 3" required></label><label class="field">Reason<textarea id="rqReason" name="reason" required></textarea></label><label class="field">Supporting document<span class="hint">Optional</span><input id="rqFile" type="file"></label>`
+  };
+  if(!type){modal(`<div class="modal-head"><h2>New request</h2><button class="x" type="button" data-act="close" aria-label="Close">✕</button></div><div class="list">
+    <button class="li nolead" style="border-left:0;border-right:0;border-top:0;background:none;text-align:left" type="button" data-act="newreq" data-t="bonafide"><span><b>Bonafide certificate</b><div class="small muted">Usually 2 working days</div></span><span>→</span></button>
+    <button class="li nolead" style="border-left:0;border-right:0;border-top:0;background:none;text-align:left" type="button" data-act="newreq" data-t="transcript"><span><b>Official transcript</b><div class="small muted">Usually 5 working days</div></span><span>→</span></button>
+    <button class="li nolead" style="border-left:0;border-right:0;border-top:0;background:none;text-align:left" type="button" data-act="newreq" data-t="makeup"><span><b>Makeup exam</b><div class="small muted">Decision in about 3 days</div></span><span>→</span></button>
+    <a class="li nolead" style="text-decoration:none" href="#campus-leave" data-act="close"><span><b>Leave</b><div class="small muted">From Campus → Leave</div></span><span>→</span></a>
+    <a class="li nolead" style="text-decoration:none" href="#campus-hostel" data-act="close"><span><b>Hostel complaint</b><div class="small muted">From Campus → Hostel</div></span><span>→</span></a></div>`);return;}
+  modal(`<div class="modal-head"><h2>${REQ_TEMPLATES[type].label}</h2><button class="x" type="button" data-act="close" aria-label="Close">✕</button></div>
+    <form class="form" data-form="req" data-t="${type}">${forms[type]}<p class="small muted">Name, ID and programme are filled in from your profile.</p><button class="btn" type="submit">Submit request</button></form>`);
+}
+function addRequest(type,title,detail,extra){const id="r"+(S.seq++);S.requests.unshift(Object.assign({id,type,title,detail,at:1,log:[stampNow()],notes:[]},extra||{}));save();return id;}
+
+/* ================= actions ================= */
+const A={
+  signin(){S.signedIn=true;save();route();toast("Signed in as Aarav Mehta (sample student)");},
+  theme(){S.theme=S.theme==="dark"?"light":"dark";save();route();},
+  palette:openPalette, close(){closeModal();},
+  palgo(d){goPal(d.to);},
+  where(d){whereIs(d.room);},
+  story(d){showStory(+d.i);}, storynext(){storyStep(1);}, storyprev(){storyStep(-1);},
+  ics(){toast("Calendar file would download here. Timetable and compre dates included.");},
+  msgic(d){modal(`<div class="modal-head"><h2>Message ${esc(d.c)} IC</h2><button class="x" type="button" data-act="close" aria-label="Close">✕</button></div><form class="form" data-form="msg"><label class="field">Message<textarea id="msgText" required placeholder="Your question"></textarea></label><button class="btn" type="submit">Send</button></form>`);},
+  setcalc(d){S.calcCourse=d.c;save();},
+  pick(d){S.reg.picks[d.c]=d.s;S.reg.submitted=false;save();route();},
+  regsubmit(){S.reg.submitted=true;save();route();toast("Preferences submitted. Results on 10 Dec.");},
+  regwithdraw(){S.reg.submitted=false;save();route();toast("Preferences withdrawn. Submit again by 8 Dec.");},
+  target(d){S.calcTarget=d.g;save();route();},
+  psmove(d){const i=+d.i,j=i+ +d.d;[S.ps[i],S.ps[j]]=[S.ps[j],S.ps[i]];S.psSaved=false;save();route();},
+  pssave(){S.psSaved=true;save();route();toast("PS-I ranking saved. You can change it until 12 Dec.");},
+  leavetype(d,el){$$("[data-act=leavetype]").forEach(b=>b.setAttribute("aria-pressed",String(b===el)));$("#leaveType").value=d.v;},
+  grub(d){const g=GRUBS.find(x=>x.id===d.id);if(S.grubs[g.id]){delete S.grubs[g.id];S.dues=S.dues.filter(x=>x.id!=="grub-"+g.id);toast(g.name+" cancelled");}else{S.grubs[g.id]=true;S.dues.push({id:"grub-"+g.id,title:g.name,note:g.when,amt:g.price});toast("Signed up for "+g.name+". "+inr(g.price)+" added to Wallet.");}save();route();},
+  rate(d){S.rating.wed=+d.n;save();route();toast("Thanks. Rating sent to the mess committee.");},
+  rsvp(d){const e=EVENTS.find(x=>x.id===d.id);if(S.rsvp[e.id]){delete S.rsvp[e.id];S.dues=S.dues.filter(x=>x.id!=="ev-"+e.id);toast("RSVP cancelled");}else{S.rsvp[e.id]=true;if(e.price)S.dues.push({id:"ev-"+e.id,title:e.name+" pass",note:e.when,amt:e.price});toast(e.price?"Pass reserved. Pay "+inr(e.price)+" in Wallet.":"You're going. Pass added to Wallet.");}save();route();},
+  mute(d){if(S.mutes[d.src])delete S.mutes[d.src];else S.mutes[d.src]=true;save();route();},
+  pay(){const sel=V.wallet.sel,items=S.dues.filter(d=>sel.has(d.id)),total=items.reduce((a,d)=>a+d.amt,0);
+    modal(`<div class="modal-head"><h2>Pay ${inr(total)}</h2><button class="x" type="button" data-act="close" aria-label="Close">✕</button></div><div class="list">${items.map(d=>`<div class="li nolead"><span>${esc(d.title)}</span><span class="amt">${inr(d.amt)}</span></div>`).join("")}</div>
+      <div class="status info">Prototype: no money moves. On the real app this opens your UPI app (GPay, PhonePe, Paytm) to approve.</div><button class="btn block" type="button" data-act="payconfirm">Simulate UPI payment</button>`);},
+  payconfirm(){const sel=V.wallet.sel,items=S.dues.filter(d=>sel.has(d.id));const ref="CT-"+Math.floor(10000+Math.random()*89999);
+    items.forEach(d=>S.receipts.unshift({title:d.title,amt:d.amt,date:new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}),via:"UPI (simulated)",ref}));
+    S.dues=S.dues.filter(d=>!sel.has(d.id));sel.clear();save();closeModal();route();toast("Payment simulated. Receipt "+ref+" saved.");},
+  showpass(d){modal(`<div class="modal-head"><h2>${esc(d.t)}</h2><button class="x" type="button" data-act="close" aria-label="Close">✕</button></div><p class="muted">${esc(d.d)}</p><canvas id="passqr" width="200" height="200" style="align-self:center;background:#fff;border-radius:12px;padding:8px" aria-label="Sample QR code"></canvas><p class="small muted" style="text-align:center">Sample QR · ${esc(STUDENT.name)} · ${esc(STUDENT.id)}</p>`);drawQR($("#passqr"),d.t+STUDENT.id);},
+  newreq(d){newReq(d&&d.t);},
+  advance(d){const r=S.requests.find(x=>x.id===d.id),t=REQ_TEMPLATES[r.type];if(r.at<t.steps.length){r.log[r.at]=stampNow();r.at++;}save();route();
+    toast(r.at>=t.steps.length?(r.type==="leave"?"Leave approved. Gate pass is in Wallet.":"Request complete."):"Moved to: "+t.steps[r.at][0]);},
+  askcancel(d){V.req.confirm=d.id;route();}, keepreq(){V.req.confirm=null;route();},
+  cancelreq(d){const r=S.requests.find(x=>x.id===d.id);r.cancelled=true;V.req.confirm=null;save();route();toast("Request cancelled");},
+  profile(){modal(`<div class="modal-head"><h2>Profile</h2><button class="x" type="button" data-act="close" aria-label="Close">✕</button></div>
+    <div class="row" style="justify-content:flex-start"><span class="avatar" style="width:48px;height:48px">AM</span><div><b>${esc(STUDENT.name)}</b><div class="small muted mono">${esc(STUDENT.id)}</div></div></div>
+    <div class="list"><div class="li nolead"><span>Programme</span><span class="small">${esc(STUDENT.prog)}</span></div><div class="li nolead"><span>Hostel</span><span class="small">${esc(STUDENT.hostel)}</span></div><div class="li nolead"><span>Campus</span><span class="small">${esc(STUDENT.campus)}</span></div></div>
+    <label class="check"><input type="checkbox" id="pAccess" data-change="parent" ${S.parentAccess?"checked":""}> Let my parent see fee dues and leave dates</label>
+    <div class="row wrap"><button class="btn line" type="button" data-act="reset">Reset sample data</button><button class="btn ghost" type="button" data-act="signout">Sign out</button></div>`);},
+  reset(){const th=S.theme;S=defaults();S.theme=th;S.signedIn=true;V.wallet.sel=null;save();closeModal();route();toast("Sample data reset");},
+  signout(){S.signedIn=false;save();closeModal();location.hash="#today";route();}
+};
+document.addEventListener("click",e=>{const el=e.target.closest("[data-act]");if(!el)return;const fn=A[el.dataset.act];if(!fn)return;if(el.tagName!=="A")e.preventDefault();fn(el.dataset,el,e);});
+document.addEventListener("change",e=>{const el=e.target.closest("[data-change]");if(!el)return;const k=el.dataset.change;
+  if(k==="due"){const s=V.wallet.sel;el.checked?s.add(el.dataset.id):s.delete(el.dataset.id);route();}
+  if(k==="calccourse"){S.calcCourse=el.value;save();route();}
+  if(k==="parent"){S.parentAccess=el.checked;save();toast(el.checked?"Parent access on":"Parent access off");}
+});
+document.addEventListener("submit",e=>{const f=e.target.closest("[data-form]");if(!f)return;e.preventDefault();const k=f.dataset.form,v=n=>{const x=f.querySelector(`[name="${n}"]`);return x?x.value.trim():"";};
+  if(k==="leave"){const from=v("from"),to=v("to");if(to<from){toast("Return date must be after the leaving date.");return;}
+    const fmt=s=>new Date(s+"T00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short"});
+    const id=addRequest("leave",v("type")+" leave",fmt(from)+" → "+fmt(to)+" · "+v("dest"),{leave:{from,to,dest:v("dest")}});location.hash="#req-"+id;toast("Leave request sent to your warden.");}
+  if(k==="complaint"){const id=addRequest("complaint",v("cat")+" · Room "+v("room"),v("desc"));location.hash="#req-"+id;toast("Complaint raised. Maintenance has been notified.");}
+  if(k==="req"){const t=f.dataset.t;let title=REQ_TEMPLATES[t].label,detail="";
+    if(t==="bonafide")detail="Purpose: "+v("purpose");
+    if(t==="transcript"){detail=v("copies")+" copies → "+v("to");S.dues.push({id:"tr-"+S.seq,title:"Transcript fee",note:v("copies")+" copies",amt:500*(+v("copies")||1)});}
+    if(t==="makeup"){title="Makeup exam · "+v("course")+" "+v("eval");detail=v("reason");}
+    const id=addRequest(t,title,detail);closeModal();location.hash="#req-"+id;toast("Request submitted.");}
+  if(k==="note"){const r=S.requests.find(x=>x.id===f.dataset.id);r.notes.push({text:v("note"),when:stampNow()});save();route();toast("Note sent to the office.");}
+  if(k==="msg"){closeModal();toast("Message sent. Replies appear in your Inbox.");}
+});
+
+if(!location.hash)history.replaceState(null,"","#today");
+route();
+})();
+</script>
+</body>
+</html>
