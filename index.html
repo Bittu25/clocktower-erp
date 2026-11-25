@@ -116,9 +116,9 @@ td:first-child{font-weight:600;white-space:nowrap}
 .view[hidden]{display:none!important}
 .tabbar{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);background:var(--surface);padding:8px 6px 14px}
 .tabbar span{text-align:center;font-size:10.5px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px}
-.tabbar span::before{content:"";width:20px;height:4px;border-radius:2px;background:var(--line)}
+.tabbar span::before{content:"";width:40px;height:22px;border-radius:999px;background:radial-gradient(circle,var(--line) 0 6px,transparent 7px)}
 .tabbar span.on{color:var(--accent);font-weight:600}
-.tabbar span.on::before{background:var(--accent)}
+.tabbar span.on::before{background:radial-gradient(circle,var(--accent) 0 6px,transparent 7px),color-mix(in srgb,var(--accent) 14%,transparent)}
 .appbar{display:flex;justify-content:space-between;align-items:center}
 .appbar h5{margin:0;font-family:var(--display);font-size:20px;font-weight:700}
 .icons{display:flex;gap:8px}
@@ -342,7 +342,7 @@ footer{margin-top:72px;color:var(--muted);font-size:.85rem;border-top:1px solid 
         <tr><td>WhatsApp</td><td>Notifications you can act on; chat with a person, not a portal</td><td>Actionable alerts (Approve, Pay, View) and chat threads with SWD, warden or IC instead of email</td></tr>
         <tr><td>Amazon cart</td><td>Add now, decide later, save for later</td><td>Course cart for next semester that is open all term, with alternates ranked</td></tr>
         <tr><td>BookMyShow</td><td>See seats left before you choose; ticket as QR</td><td>Live seats per section; exam seating and fest passes as QR in Wallet</td></tr>
-        <tr><td>Google Calendar</td><td>Everything with a time shows in one calendar</td><td>Timetable, quizzes, midsem, compre and deadlines auto-synced, with one-tap export</td></tr>
+        <tr><td>Google Calendar</td><td>Everything with a time shows in one calendar</td><td>Timetable, quizzes, midsem, compre and deadlines auto-synced, with one-tap export; timetable as image or PDF</td></tr>
         <tr><td>DigiLocker</td><td>Verified documents ready to share</td><td>Pull 10th/12th and ID at admission; push bonafide, grade sheets and degree back</td></tr>
         <tr><td>LinkedIn / Unstop</td><td>A profile that applies for you</td><td>Placement profile auto-filled from verified grades, projects and PS; one-tap applications</td></tr>
         <tr><td>Splitwise</td><td>Shared costs settle without awkward math</td><td>Club and fest budgets, group event passes split among members</td></tr>
@@ -376,7 +376,7 @@ footer{margin-top:72px;color:var(--muted);font-size:.85rem;border-top:1px solid 
   <div class="sec-head">
     <p class="eyebrow">05 · Prototype</p>
     <h2>Key screens, clickable</h2>
-    <p>The registration grid, compre calculator, wallet and PS ranking work. Names, marks and amounts are examples.</p>
+    <p>The registration grid, compre calculator, wallet and PS ranking work. Names, marks and amounts are examples. For every screen, including tutorials, practicals, auto-pick and timetable download, <a href="app.html">open the full app</a>.</p>
   </div>
   <div class="proto">
     <div class="phone-col">
@@ -506,7 +506,10 @@ footer{margin-top:72px;color:var(--muted);font-size:.85rem;border-top:1px solid 
         <h3>A cart instead of a race</h3>
         <ul>
           <li>The cart is open for weeks. Students plan whenever they want, so there is no load spike at opening minute.</li>
-          <li>Picking a section paints the week grid instantly. A clash turns red before you can submit it. Try switching CS F364 to L2.</li>
+          <li>Picking a section paints the week grid instantly. A clash turns red before you can submit it. CS F363 and CS F364 start out clashing: switch CS F363 to L2 to clear it.</li>
+          <li>Each course shows every component (lecture, tutorial, practical). A section that would clash is marked on its own card with the course it clashes with, and a full section just says <b>Full</b> and can't be picked.</li>
+          <li>Not sure? <b>Let Clocktower pick</b> builds a clash-free week (optionally with no 9 AM classes), or shuffles to another valid one, with one-tap undo.</li>
+          <li>The finished week downloads as an image or a PDF to share or print.</li>
           <li>Submissions in the window are allotted together by the existing priority rules (year, CGPA, core vs elective), then everyone is notified at once.</li>
           <li>Add/drop happens in the same cart with live seat counts, not a separate form.</li>
         </ul>
@@ -569,7 +572,7 @@ footer{margin-top:72px;color:var(--muted);font-size:.85rem;border-top:1px solid 
     <div class="flow">
       <h3>Register for next semester</h3>
       <div class="lane before"><span class="lab">Today</span><div class="stepchips"><span>Download timetable PDF</span><span>Plan in a sheet or student tool</span><span>Wait for your slot</span><span>Log in at the exact minute</span><span>Search each class</span><span>Hit a clash</span><span>Redo</span><span>Add/drop form later</span></div><span class="count">8<small>steps</small></span></div>
-      <div class="lane after"><span class="lab">Clocktower</span><div class="stepchips"><span>Build cart any time</span><span>Fix clashes live</span><span>Submit by deadline</span><span>Get allotment</span></div><span class="count">4<small>steps</small></span></div>
+      <div class="lane after"><span class="lab">Clocktower</span><div class="stepchips"><span>Build cart any time</span><span>Fix clashes live or auto-pick</span><span>Submit by deadline</span><span>Get allotment</span></div><span class="count">4<small>steps</small></span></div>
     </div>
     <div class="flow">
       <h3>Go home for winter break</h3>
@@ -612,7 +615,7 @@ footer{margin-top:72px;color:var(--muted);font-size:.85rem;border-top:1px solid 
     <p>These checks were applied to each screen above and should be re-run with students in usability tests each semester.</p>
   </div>
   <div class="checks">
-    <div class="check"><span class="tick">✓</span><p><b>Thumb reach.</b> Primary actions sit in the bottom half of the screen.</p></div>
+    <div class="check"><span class="tick">✓</span><p><b>Thumb reach.</b> Primary actions sit in the bottom half of the screen; on phones, registration status and Submit stay pinned above the tab bar.</p></div>
     <div class="check"><span class="tick">✓</span><p><b>Three-tap rule.</b> The top ten tasks finish in three taps or fewer from Today.</p></div>
     <div class="check"><span class="tick">✓</span><p><b>No silent waits.</b> Every request shows status, owner and expected time.</p></div>
     <div class="check"><span class="tick">✓</span><p><b>Works on bad Wi-Fi.</b> Timetable, ID card and gate pass are cached offline.</p></div>
@@ -621,6 +624,9 @@ footer{margin-top:72px;color:var(--muted);font-size:.85rem;border-top:1px solid 
     <div class="check"><span class="tick">✓</span><p><b>Calm notifications.</b> Mute per source; quiet hours during midsem and compre.</p></div>
     <div class="check"><span class="tick">✓</span><p><b>Student owns privacy.</b> Parent access and grade sharing are the student's choice.</p></div>
     <div class="check"><span class="tick">✓</span><p><b>One identity.</b> BITS Google sign-in everywhere; no separate portal passwords.</p></div>
+    <div class="check"><span class="tick">✓</span><p><b>Phone and laptop.</b> Bottom tabs on phones; a collapsible sidebar on laptops, with content widening to fill the space.</p></div>
+    <div class="check"><span class="tick">✓</span><p><b>Honest availability.</b> Full sections say Full and can't be picked; clashes are named on the card that causes them.</p></div>
+    <div class="check"><span class="tick">✓</span><p><b>Plans travel.</b> The timetable downloads as an image or PDF; light or dark theme is remembered.</p></div>
   </div>
   <h3 style="margin-top:8px">Top tasks and target taps from Today</h3>
   <div class="taps">
@@ -677,7 +683,7 @@ footer{margin-top:72px;color:var(--muted);font-size:.85rem;border-top:1px solid 
   const stages=[
     {t:"Offer & admission",w:"May–Jul",today:"BITSAT results lead to an admission portal, fee by net-banking, and documents uploaded or emailed more than once across iteration lists.",now:"An onboarding checklist that reads like a checkout: accept offer, pay, pull documents from DigiLocker, rank hostel preferences, get your digital ID before you arrive.",apps:["DigiLocker","Swiggy checkout","GPay"]},
     {t:"Arrival week",w:"August",today:"Queues for registration, ID, hostel and mess. The real information lives in seniors' WhatsApp groups.",now:"An arrival pass QR, a 'where next' list with the map, a senior buddy chat, mess choice and bank or SIM help, all from the phone.",apps:["Google Maps","Boarding pass","WhatsApp"]},
-    {t:"Course registration",w:"Nov & Apr",today:"Planning in PDFs and spreadsheets, a race when the ERP slot opens, clashes found after submitting, add/drop by form.",now:"A course cart open for weeks with live clash detection, ranked alternates, preference-based allotment by existing rules, and add/drop in the same cart.",apps:["Amazon cart","BookMyShow seats","Google Calendar"]},
+    {t:"Course registration",w:"Nov & Apr",today:"Planning in PDFs and spreadsheets, a race when the ERP slot opens, clashes found after submitting, add/drop by form.",now:"A course cart open for weeks with live clash detection, a one-tap clash-free timetable if you'd rather not plan it yourself, ranked alternates, preference-based allotment by existing rules, and add/drop in the same cart.",apps:["Amazon cart","BookMyShow seats","Google Calendar"]},
     {t:"Classes & evaluations",w:"Aug–Dec, Jan–May",today:"Handouts as PDFs, the LMS on a separate login, quiz and midsem dates in emails, marks without totals.",now:"Each course page holds the handout, evaluation plan, live marks and LMS posts. Exams, seating and deadlines sync to your calendar.",apps:["Google Calendar","Notion"]},
     {t:"Grades & standing",w:"Dec & May",today:"Grades buried in ERP menus, CGPA worked out by hand, makeup and re-evaluation through forms and visits.",now:"A grade sheet with trends, a compre and CGPA what-if, makeup and re-eval requests in the tracker, and early private nudges with your advisor.",apps:["Spotify Wrapped","Fitness trends"]},
     {t:"Hostel, mess & leave",w:"All year",today:"Leave forms needing warden sign-off, monthly mess changes on the SWD portal, complaints written in a register.",now:"Leave in three taps with a QR gate pass and parent alert, mess and grub signups with ratings, hostel complaints with a photo and live status.",apps:["Swiggy tracking","Zomato ratings","Uber ETA"]},
