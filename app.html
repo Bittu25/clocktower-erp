@@ -564,9 +564,7 @@ V["acad-reg"]=()=>{
     ${acadTabs("acad-reg")}
     <div class="grid2"><div class="col">
       ${REG.map((c,ci)=>{const pick=S.reg.picks[c.code],cur=conflictsFor(ci,pick);
-        const fix=cur.length?Object.keys(c.secs).find(k=>k!==pick&&!conflictsFor(ci,k).length):null;
         return `<div class="card ${cur.length?"clashing":""}"><div class="card-head"><b><span class="sw k${ci}b"></span>${esc(c.code)} · ${esc(c.name)}</b>${cur.length?'<span class="pill bad">Clash</span>':'<span class="small muted">'+c.units+' units</span>'}</div>
-        ${cur.length?`<div class="clashnote"><span>${cur.map(x=>`Section ${pick} clashes with <b>${esc(x.code)}</b> on ${slotTxt(x.hits)}`).join("<br>")}</span>${fix?`<button class="btn sm danger" type="button" data-act="pick" data-c="${esc(c.code)}" data-s="${fix}">Switch to ${fix}</button>`:'<span class="small">Change the other course\'s section to fix this.</span>'}</div>`:""}
         <div class="secbtns">${Object.keys(c.secs).map(k=>{const on=pick===k,cf=on?cur:conflictsFor(ci,k);
           return `<button type="button" class="${cf.length?"has-clash":""}" data-act="pick" data-c="${esc(c.code)}" data-s="${k}" aria-pressed="${on}" style="${on?"background:"+KCOL[ci]:""}"><span class="sec-top"><b>Section ${k}</b><span>${c.seats[k]} seats left</span></span><span class="sec-time">${slotTxt(c.secs[k])}</span>
             <span class="fit ${cf.length?"no":"ok"}">${cf.length?"✕ Clashes with "+cf.map(x=>esc(x.code)).join(", "):"✓ No clash"}</span></button>`;}).join("")}</div></div>`;}).join("")}
