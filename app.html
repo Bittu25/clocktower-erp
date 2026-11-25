@@ -196,6 +196,8 @@ tr:last-child td{border-bottom:0}
 .part-head:first-of-type{border-top:0;padding-top:0}
 .secbtns button.full{opacity:.55;cursor:not-allowed}
 .secbtns .fit.full{background:var(--sunk);color:var(--muted)}
+.autopick{background:linear-gradient(0deg,var(--surface),var(--surface)) padding-box;border-color:var(--accent)}
+.difflist{margin:6px 0 0;padding-left:18px;font-weight:500;font-family:var(--mono);font-size:.8rem}
 .morebtn{align-self:flex-start;border:0;background:none;color:var(--accent);font-weight:700;padding:2px 0;font-size:.88rem}
 .card.clashing{border-color:var(--bad);box-shadow:0 0 0 1px var(--bad)}
 .clashnote{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--bad-soft);color:var(--bad);border-radius:10px;padding:9px 12px;font-size:.88rem}
@@ -563,6 +565,21 @@ V.course=(s)=>{
     </div></div></div>`;
 };
 const SHOW_MAX=4;
+/* Every clash-free timetable from open (non-full) sections. Small enough to enumerate: a few hundred combinations. */
+function allTimetables(){
+  const vars=[];REG.forEach(c=>c.parts.forEach(p=>vars.push({code:c.code,type:p.type,opts:Object.keys(p.secs).filter(k=>p.secs[k].seats>0).map(k=>({k,s:p.secs[k].s,seats:p.secs[k].seats}))})));
+  const out=[],used=new Set(),cur=[];
+  (function go(i){
+    if(i===vars.length){out.push(cur.slice());return;}
+    for(const o of vars[i].opts){const keys=o.s.map(([d,h])=>d+"-"+h);if(keys.some(x=>used.has(x)))continue;keys.forEach(x=>used.add(x));cur.push(o);go(i+1);cur.pop();keys.forEach(x=>used.delete(x));}
+  })(0);
+  return out.map(sol=>{const picks={};let changes=0,seats=Infinity,early=0;sol.forEach((o,i)=>{const v=vars[i];(picks[v.code]=picks[v.code]||{})[v.type]=o.k;if(S.reg.picks[v.code][v.type]!==o.k)changes++;seats=Math.min(seats,o.seats);early+=o.s.filter(([d,h])=>h===9).length;});return{picks,changes,seats,early};});
+}
+function applyPicks(newPicks,label){
+  const before=JSON.parse(JSON.stringify(S.reg.picks)),diff=[];
+  REG.forEach(c=>c.parts.forEach(p=>{const a=before[c.code][p.type],b=newPicks[c.code][p.type];if(a!==b)diff.push(`${c.code}${p.type==="Lecture"?"":" "+p.type.toLowerCase()}: ${a} → ${b}`);}));
+  V.regUndo=before;V.regLast={label,diff};S.reg.picks=newPicks;S.reg.submitted=false;save();route();
+}
 function regPicked(){const out=[];REG.forEach((c,ci)=>c.parts.forEach(p=>{const k=S.reg.picks[c.code][p.type];if(k&&p.secs[k])out.push({ci,code:c.code,type:p.type,key:k,s:p.secs[k].s});}));return out;}
 V["acad-reg"]=()=>{
   if(!V.regOpen)V.regOpen={};
@@ -602,6 +619,16 @@ V["acad-reg"]=()=>{
   return `<div class="page"><div class="page-head"><div class="stack"><span class="eyebrow">Semester II · 2026–27</span><h1>Registration cart</h1><p>Window 2–8 Dec. Everyone who submits in the window is allotted together. Clicking first gives no advantage.</p></div></div>
     ${acadTabs("acad-reg")}
     <div class="grid2"><div class="col">
+      <div class="card autopick">
+        <div class="card-head"><div class="stack" style="gap:2px"><h3>Let Clocktower pick</h3><span class="small muted">Builds a clash-free timetable from sections that still have seats.</span></div></div>
+        <div class="row wrap" style="justify-content:flex-start">
+          <button class="btn" type="button" data-act="regauto">Auto-select best fit</button>
+          <button class="btn ghost" type="button" data-act="regrandom">Random timetable</button>
+          <label class="check small"><input type="checkbox" id="avoid9" data-change="avoid9" ${S.reg.avoid9?"checked":""}> Avoid 9 AM classes</label>
+        </div>
+        ${V.regLast?`<div class="status ${V.regLast.diff.length?"info":"ok"}"><div class="row wrap"><span>${esc(V.regLast.label)}${V.regLast.diff.length?":":""}</span>${V.regUndo?'<button class="btn sm line" type="button" data-act="regundo">Undo</button>':""}</div>${V.regLast.diff.length?`<ul class="difflist">${V.regLast.diff.map(d=>`<li>${esc(d)}</li>`).join("")}</ul>`:""}</div>`:""}
+        <p class="small muted">Best fit keeps as many of your choices as possible and prefers sections with more seats left. Random picks any clash-free combination.</p>
+      </div>
       <label class="check card" style="flex-direction:row;padding:12px 16px"><input type="checkbox" id="fitOnly" data-change="fitonly" ${S.reg.fitOnly?"checked":""}> Only show sections that fit my timetable</label>
       ${REG.map((c,ci)=>{const bad=c.parts.some(p=>{const k=S.reg.picks[c.code][p.type];return k&&conflictsFor(c.code,p.type,p.secs[k].s).length;});
         return `<div class="card ${bad?"clashing":""}"><div class="card-head"><b><span class="sw k${ci}b"></span>${esc(c.code)} · ${esc(c.name)}</b>${bad?'<span class="pill bad">Clash</span>':'<span class="small muted">'+c.units+' units'+(c.parts.length>1?" · "+c.parts.map(p=>p.type[0]).join("+"):"")+'</span>'}</div>
@@ -864,6 +891,16 @@ const A={
       <div class="row wrap" style="justify-content:flex-start"><a class="btn" href="#course-${slug(c.code)}" data-act="close">Open course page</a><button class="btn ghost" type="button" data-act="where" data-room="${esc(x.room)}">Directions</button><button class="btn line" type="button" data-act="msgic" data-c="${esc(c.code)}">Message IC</button></div>`);},
   pick(d){S.reg.picks[d.c][d.t]=d.s;S.reg.submitted=false;save();route();},
   regmore(d){V.regOpen[d.k]=!V.regOpen[d.k];route();},
+  regauto(){let sols=allTimetables();if(S.reg.avoid9){const n=sols.filter(s=>!s.early);if(n.length)sols=n;}
+    if(!sols.length){V.regLast={label:"No clash-free timetable is possible with the open sections. Try dropping a course.",diff:[]};V.regUndo=null;route();return;}
+    sols.sort((a,b)=>a.changes-b.changes||a.early-b.early||b.seats-a.seats);
+    if(!sols[0].changes){V.regLast={label:"Your current timetable is already the best fit. Nothing changed.",diff:[]};V.regUndo=null;route();return;}
+    applyPicks(sols[0].picks,`Best fit found (${sols[0].changes} change${sols[0].changes>1?"s":""})`);toast("Clash-free timetable selected.");},
+  regrandom(){let sols=allTimetables();if(S.reg.avoid9){const n=sols.filter(s=>!s.early);if(n.length)sols=n;}
+    const other=sols.filter(s=>s.changes);const pool=other.length?other:sols;
+    if(!pool.length){V.regLast={label:"No clash-free timetable is possible with the open sections.",diff:[]};V.regUndo=null;route();return;}
+    const pick=pool[Math.floor(Math.random()*pool.length)];applyPicks(pick.picks,`Random timetable (1 of ${sols.length} clash-free options)`);toast("Random clash-free timetable selected.");},
+  regundo(){if(!V.regUndo)return;S.reg.picks=V.regUndo;V.regUndo=null;V.regLast={label:"Undone. Your previous choices are back.",diff:[]};save();route();},
   regsubmit(){S.reg.submitted=true;save();route();toast("Preferences submitted. Results on 10 Dec.");},
   regwithdraw(){S.reg.submitted=false;save();route();toast("Preferences withdrawn. Submit again by 8 Dec.");},
   target(d){S.calcTarget=d.g;save();route();},
@@ -898,6 +935,7 @@ document.addEventListener("click",e=>{const el=e.target.closest("[data-act]");if
 document.addEventListener("change",e=>{const el=e.target.closest("[data-change]");if(!el)return;const k=el.dataset.change;
   if(k==="due"){const s=V.wallet.sel;el.checked?s.add(el.dataset.id):s.delete(el.dataset.id);route();}
   if(k==="fitonly"){S.reg.fitOnly=el.checked;save();route();}
+  if(k==="avoid9"){S.reg.avoid9=el.checked;save();}
   if(k==="calccourse"){S.calcCourse=el.value;save();route();}
   if(k==="parent"){S.parentAccess=el.checked;save();toast(el.checked?"Parent access on":"Parent access off");}
 });
