@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Clocktower ERP Concept</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: long-form case study, single column ~1080px, with a sticky phone prototype beside the screen notes. */
+:root{
+  --bg:#FFFFFF; --surface:#FFFFFF; --sunk:#F0F1F7; --ink:#14173A; --muted:#575D80; --line:#D9DCEA;
+  --accent:#3438C9; --accent-soft:#E3E4FB; --marigold:#E79A00; --marigold-soft:#FFF1D2;
+  --good:#1C8653; --good-soft:#DDF3E7; --warn:#B86B00; --bad:#CC3434; --bad-soft:#FBE2E2;
+  --phone:#0F1230; --screen:#F7F8FC;
+  --display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --body:"Instrument Sans", "Helvetica Neue", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+/* White is the default; the reader switches to dark with the toggle. */
+:root[data-theme="dark"]{
+  --bg:#0D0F24; --surface:#161935; --sunk:#1D2142; --ink:#ECEDF8; --muted:#A1A6C8; --line:#2B3058;
+  --accent:#9195FF; --accent-soft:#262A5E; --marigold:#FFB627; --marigold-soft:#3A2E10;
+  --good:#4CC98A; --good-soft:#163A28; --warn:#FFB54D; --bad:#FF7A7A; --bad-soft:#401C22;
+  --phone:#05061A; --screen:#121530; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.wrap{max-width:1080px;margin:0 auto;padding-block:40px 80px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.1;margin:0}
+h1{font-size:clamp(2.6rem,7vw,4.6rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(1.6rem,3.4vw,2.2rem);font-weight:700;letter-spacing:-.01em}
+h3{font-size:1.15rem;font-weight:700}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:1.2rem;color:var(--muted);max-width:62ch}
+section{margin-top:72px;display:flex;flex-direction:column;gap:20px}
+.sec-head{display:flex;flex-direction:column;gap:8px;max-width:70ch}
+.sec-head p{color:var(--muted)}
+code,.code{font-family:var(--mono);font-size:.85em}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* hero */
+.hero{display:flex;flex-direction:column;gap:18px}
+.disclaimer{align-self:flex-start;font-size:.8rem;border:1px dashed var(--line);border-radius:999px;padding:4px 12px;color:var(--muted)}
+.thesis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:8px}
+.thesis div{border-top:3px solid var(--accent);padding-top:10px}
+.thesis div:nth-child(2){border-color:var(--marigold)}
+.thesis div:nth-child(3){border-color:var(--good)}
+.thesis b{font-family:var(--display);font-size:1.15rem;display:block}
+.thesis span{color:var(--muted);font-size:.95rem}
+
+/* audit */
+.audit{display:grid;grid-template-columns:1.1fr 1fr;gap:24px;align-items:start}
+.portals{display:flex;flex-wrap:wrap;gap:8px;padding:20px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.portal{font-size:.85rem;padding:6px 10px;border-radius:8px;background:var(--sunk);display:flex;gap:6px;align-items:center}
+.portal i{font-style:normal;font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+.pain{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.pain li{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start}
+.sev{font-family:var(--mono);font-size:.68rem;padding:2px 7px;border-radius:5px;margin-top:3px;white-space:nowrap}
+.sev.h{background:var(--bad-soft);color:var(--bad)}
+.sev.m{background:var(--marigold-soft);color:var(--warn)}
+
+/* lifecycle */
+.years{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.year{display:flex;flex-direction:column;gap:6px;min-width:0}
+.year-label{font-family:var(--mono);font-size:.72rem;color:var(--muted);border-bottom:2px solid var(--line);padding-bottom:4px}
+.stage{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:.85rem;line-height:1.25}
+.stage small{display:block;font-family:var(--mono);font-size:.65rem;color:var(--muted);margin-top:2px}
+.stage[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.stage[aria-pressed="true"] small{color:#ffffffcc}
+.loop-note{font-size:.85rem;color:var(--muted)}
+.detail{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.detail > div{display:flex;flex-direction:column;gap:6px;min-width:0}
+.detail h4{margin:0;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+.detail .t h4{color:var(--bad)} .detail .n h4{color:var(--good)} .detail .b h4{color:var(--warn)}
+.detail-title{grid-column:1/-1;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:.78rem;padding:3px 9px;border-radius:999px;background:var(--marigold-soft);color:var(--ink)}
+
+/* table */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:.92rem}
+th,td{padding:12px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+.avoid{background:var(--bad-soft);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.avoid b{color:var(--bad)}
+
+/* IA */
+.ia{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.tabcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.tabcard .k{font-family:var(--display);font-weight:700;font-size:1.1rem;display:flex;gap:8px;align-items:center}
+.tabcard ul{margin:0;padding-left:18px;color:var(--muted);font-size:.9rem}
+.dot{width:10px;height:10px;border-radius:3px;background:var(--accent);flex:none}
+
+/* prototype */
+.proto{display:grid;grid-template-columns:360px minmax(0,1fr);gap:36px;align-items:start}
+.phone-col{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);display:flex;flex-direction:column;gap:12px;align-items:center}
+.screen-tabs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.screen-tabs button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;font-size:.8rem}
+.screen-tabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.phone{width:340px;max-width:100%;background:var(--phone);border-radius:42px;padding:11px;box-shadow:0 30px 60px -30px #0b0e3a80}
+.scr{background:var(--screen);border-radius:32px;height:660px;overflow:hidden;display:flex;flex-direction:column;position:relative;font-size:13px;line-height:1.4}
+.statusbar{display:flex;justify-content:space-between;padding:12px 22px 4px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.view{flex:1;overflow-y:auto;padding:6px 14px 14px;display:flex;flex-direction:column;gap:10px}
+.view[hidden]{display:none!important}
+.tabbar{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);background:var(--surface);padding:8px 6px 14px}
+.tabbar span{text-align:center;font-size:10.5px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px}
+.tabbar span::before{content:"";width:20px;height:4px;border-radius:2px;background:var(--line)}
+.tabbar span.on{color:var(--accent);font-weight:600}
+.tabbar span.on::before{background:var(--accent)}
+.appbar{display:flex;justify-content:space-between;align-items:center}
+.appbar h5{margin:0;font-family:var(--display);font-size:20px;font-weight:700}
+.icons{display:flex;gap:8px}
+.icon{width:30px;height:30px;border-radius:50%;background:var(--sunk);display:grid;place-items:center;font-size:11px;font-family:var(--mono);color:var(--muted);position:relative}
+.icon .badge{position:absolute;top:-2px;right:-2px;background:var(--bad);color:#fff;font-size:9px;border-radius:999px;padding:0 4px}
+.search{background:var(--sunk);border-radius:12px;padding:9px 12px;color:var(--muted);font-size:12.5px}
+.stories{display:flex;gap:10px;overflow-x:auto;padding-bottom:2px}
+.story{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;color:var(--muted);flex:none}
+.story b{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:10px;color:var(--ink);background:var(--surface);box-shadow:0 0 0 2px var(--screen),0 0 0 4px var(--marigold)}
+.story.seen b{box-shadow:0 0 0 2px var(--screen),0 0 0 4px var(--line)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.card.hero-card{background:var(--accent);border-color:var(--accent);color:#fff}
+.card.hero-card .sub{color:#ffffffcc}
+.sub{color:var(--muted);font-size:11.5px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pill{font-size:10.5px;padding:2px 8px;border-radius:999px;font-weight:600;white-space:nowrap}
+.pill.good{background:var(--good-soft);color:var(--good)}
+.pill.warn{background:var(--marigold-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.info{background:var(--accent-soft);color:var(--accent)}
+.btn{border:0;border-radius:12px;padding:10px 12px;background:var(--accent);color:#fff;font-weight:600;font-size:13px}
+.btn.ghost{background:var(--sunk);color:var(--ink)}
+.btn.light{background:#ffffff;color:#1d2170}
+.mini{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.big{font-family:var(--display);font-size:26px;font-weight:700;line-height:1}
+.banner{background:var(--marigold-soft);border-radius:12px;padding:9px 12px;font-size:12px}
+
+/* registration grid */
+.course{display:flex;flex-direction:column;gap:5px;padding:9px 10px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.course .row b{font-size:12.5px}
+.secs{display:flex;gap:5px;flex-wrap:wrap}
+.secs button{border:1px solid var(--line);background:var(--screen);border-radius:8px;padding:2px 8px;font-size:11px;font-family:var(--mono)}
+.secs button[aria-pressed="true"]{color:#fff;border-color:transparent}
+.sw{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:6px}
+.grid{display:grid;grid-template-columns:22px repeat(6,1fr);gap:2px;font-size:9.5px;font-family:var(--mono)}
+.grid div{min-height:18px;border-radius:4px;display:grid;place-items:center;color:var(--muted)}
+.grid .cell{background:var(--sunk)}
+.grid .cell.clash{background:var(--bad)!important;color:#fff;font-weight:700}
+.c0,.grid .cell.c0{background:#5B5FE0} .c1,.grid .cell.c1{background:#D9822B} .c2,.grid .cell.c2{background:#2E9C6A} .c3,.grid .cell.c3{background:#B04FA8}
+.grid .cell.c0,.grid .cell.c1,.grid .cell.c2,.grid .cell.c3{color:#fff}
+.status{border-radius:10px;padding:8px 10px;font-size:12px}
+.status.ok{background:var(--good-soft);color:var(--good)}
+.status.no{background:var(--bad-soft);color:var(--bad)}
+
+/* tracker */
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.steps li{display:grid;grid-template-columns:22px 1fr;gap:10px;position:relative;padding-bottom:14px}
+.steps li::before{content:"";position:absolute;left:10px;top:20px;bottom:0;width:2px;background:var(--line)}
+.steps li:last-child::before{display:none}
+.steps li.done::before{background:var(--good)}
+.steps .b{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);background:var(--surface);z-index:1}
+.steps li.done .b{background:var(--good);border-color:var(--good)}
+.steps li.now .b{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.steps p{font-size:12.5px;font-weight:600}
+.steps span{font-size:11px;color:var(--muted)}
+
+/* wallet */
+.due{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.due:last-child{border-bottom:0}
+.due input{width:18px;height:18px;accent-color:var(--accent)}
+.amt{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums}
+
+/* grades */
+.bars{display:flex;align-items:flex-end;gap:8px;height:70px;padding-top:6px}
+.bars div{flex:1;background:var(--accent-soft);border-radius:6px 6px 2px 2px;position:relative}
+.bars div.last{background:var(--accent)}
+.bars div span{position:absolute;top:-16px;left:0;right:0;text-align:center;font-family:var(--mono);font-size:9.5px;color:var(--muted)}
+.glabels{display:flex;gap:8px}
+.glabels span{flex:1;text-align:center;font-family:var(--mono);font-size:9.5px;color:var(--muted)}
+.targets{display:flex;gap:5px;flex-wrap:wrap}
+.targets button{border:1px solid var(--line);background:var(--screen);border-radius:8px;padding:3px 9px;font-size:11.5px;font-weight:600}
+.targets button[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.comp{display:grid;grid-template-columns:1fr auto;font-size:12px;gap:2px 8px}
+.comp span:nth-child(even){font-family:var(--mono);text-align:right}
+
+/* ps */
+.rank{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.rank .n{font-family:var(--display);font-weight:700;font-size:16px;color:var(--accent)}
+.rank .mv{display:flex;flex-direction:column;gap:2px}
+.rank .mv button{border:0;background:var(--sunk);border-radius:6px;width:26px;height:18px;font-size:10px;line-height:1}
+
+/* notes */
+.notes{display:flex;flex-direction:column;gap:14px}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:8px}
+.note[hidden]{display:none!important}
+.note ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.note .from{font-size:.85rem;color:var(--muted)}
+.note .from b{color:var(--warn)}
+
+/* flows */
+.flows{display:flex;flex-direction:column;gap:14px}
+.flow{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.lane{display:grid;grid-template-columns:90px minmax(0,1fr) 64px;gap:12px;align-items:center}
+.lane .lab{font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase}
+.lane.before .lab{color:var(--bad)} .lane.after .lab{color:var(--good)}
+.stepchips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.stepchips span{font-size:.8rem;padding:4px 9px;border-radius:8px;background:var(--sunk)}
+.lane.after .stepchips span{background:var(--good-soft)}
+.stepchips span + span::before{content:"→ ";color:var(--muted)}
+.count{font-family:var(--display);font-weight:800;font-size:1.5rem;text-align:right}
+.lane.before .count{color:var(--bad)} .lane.after .count{color:var(--good)}
+.count small{display:block;font-family:var(--mono);font-size:.6rem;font-weight:400;color:var(--muted)}
+
+/* roles + checks */
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.role{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px}
+.role p{color:var(--muted);font-size:.92rem}
+.checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px}
+.check{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.check .tick{width:20px;height:20px;border-radius:6px;background:var(--good-soft);color:var(--good);display:grid;place-items:center;font-size:12px;font-weight:700;margin-top:2px}
+.check p{font-size:.92rem;color:var(--muted)}
+.check b{color:var(--ink)}
+.taps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.tap{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;border-radius:10px;background:var(--sunk);font-size:.92rem}
+.tap b{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--accent)}
+.phases{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.phase{border-left:3px solid var(--accent);padding:4px 0 4px 14px;display:flex;flex-direction:column;gap:4px}
+.phase p{color:var(--muted);font-size:.9rem}
+.theme-toggle{position:fixed;z-index:20;top:calc(env(safe-area-inset-top,0px) + 14px);right:calc(env(safe-area-inset-right,0px) + 14px);
+  display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  border-radius:999px;padding:7px 14px 7px 8px;font-size:.85rem;font-weight:600;box-shadow:0 6px 20px -10px #0b0e3a66}
+.theme-toggle .knob{width:34px;height:20px;border-radius:999px;background:var(--sunk);border:1px solid var(--line);position:relative}
+.theme-toggle .knob::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--marigold)}
+:root[data-theme="dark"] .theme-toggle .knob::after{left:16px;background:var(--accent)}
+@media (prefers-reduced-motion:no-preference){.theme-toggle .knob::after{transition:left .2s}}
+footer{margin-top:72px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-top:18px}
+
+@media (max-width:880px){
+  .audit,.proto{grid-template-columns:1fr}
+  .phone-col{position:static}
+  .detail{grid-template-columns:1fr}
+  .years{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .phases{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:520px){
+  .years{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .phases{grid-template-columns:1fr}
+  .lane{grid-template-columns:1fr auto}
+  .lane .lab{grid-column:1}
+  .lane .stepchips{grid-column:1/-1;grid-row:2}
+  .lane .count{grid-column:2;grid-row:1}
+  .phone{border-radius:36px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .stage,.screen-tabs button,.secs button{transition:background .15s,color .15s}
+}
+</style>
+
+<button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false"><span class="knob" aria-hidden="true"></span><span id="themeLabel">Dark mode</span></button>
+
+<div class="wrap">
+
+<header class="hero">
+  <span class="disclaimer">Concept proposal · not an official BITS Pilani product</span>
+  <p class="eyebrow">Student ERP redesign · Pilani · Goa · Hyderabad · Dubai</p>
+  <h1>Clocktower</h1>
+  <p class="lede">One mobile-first app for a BITSian's whole journey, from the BITSAT offer to the alumni transcript request. It replaces the patchwork of ERP, LMS, SWD, PSD and placement portals with one login, and it borrows its interaction patterns from apps students already open fifty times a day.</p>
+  <div class="thesis">
+    <div><b>One login, one inbox</b><span>Every portal, notice and request behind a single BITS Google sign-in.</span></div>
+    <div><b>Every request is trackable</b><span>Leave, bonafide, re-eval and no-dues show who holds it and when it will move, like a food order.</span></div>
+    <div><b>No more races</b><span>Course registration and PS allotment run on submitted preferences, not on who clicks first at 10:00.</span></div>
+  </div>
+</header>
+
+<section id="audit">
+  <div class="sec-head">
+    <p class="eyebrow">01 · Audit of today</p>
+    <h2>A student touches nine systems in one semester</h2>
+    <p>This is the typical setup students describe across campuses. Names vary a little by campus; the pattern does not.</p>
+  </div>
+  <div class="audit">
+    <div class="portals" aria-label="Systems a student uses today">
+      <span class="portal">ERP <i>PeopleSoft</i></span>
+      <span class="portal">LMS <i>Nalanda / CMS · Moodle</i></span>
+      <span class="portal">SWD portal <i>leave, mess, certificates</i></span>
+      <span class="portal">Timetable <i>PDF from AUGSD/Timetable Div.</i></span>
+      <span class="portal">PSD portal <i>PS-I / PS-II stations</i></span>
+      <span class="portal">Placement portal</span>
+      <span class="portal">Email <i>notice floods</i></span>
+      <span class="portal">WhatsApp groups <i>the real notice board</i></span>
+      <span class="portal">Google Forms <i>clubs, surveys, add/drop</i></span>
+      <span class="portal">Student-built timetable tools</span>
+      <span class="portal">Paper registers <i>hostel complaints, no-dues</i></span>
+    </div>
+    <ul class="pain">
+      <li><span class="sev h">HIGH</span><span><b>Registration is a race.</b> Sections fill in minutes, the ERP slows under load, and clashes show up only after you submit.</span></li>
+      <li><span class="sev h">HIGH</span><span><b>Requests disappear.</b> A bonafide certificate or leave request has no visible status, so students email and walk to offices to ask.</span></li>
+      <li><span class="sev h">HIGH</span><span><b>Desktop-first screens.</b> PeopleSoft menus are nested and hard to use on a phone, where students do almost everything else.</span></li>
+      <li><span class="sev m">MED</span><span><b>Notices are noise.</b> Important dates are lost between club mails, and seniors' WhatsApp forwards become the source of truth.</span></li>
+      <li><span class="sev m">MED</span><span><b>Marks without meaning.</b> Component marks sit in the LMS, grades in the ERP, and nobody shows what you need in the compre.</span></li>
+      <li><span class="sev m">MED</span><span><b>Graduation by signature hunt.</b> No-dues still means walking to the library, hostel, department and accounts.</span></li>
+    </ul>
+  </div>
+</section>
+
+<section id="lifecycle">
+  <div class="sec-head">
+    <p class="eyebrow">02 · Student life cycle</p>
+    <h2>Twelve moments from offer letter to alumni</h2>
+    <p>Pick a moment to see what happens today, what Clocktower does instead, and which familiar app the pattern comes from. Registration, classes, grades and campus life repeat every semester.</p>
+  </div>
+  <div class="years" id="years"></div>
+  <p class="loop-note">↻ Semester loop: Registration → Classes &amp; evals → Grades, twice a year plus summer term. Campus life and money run all year.</p>
+  <div class="detail" id="detail" aria-live="polite"></div>
+</section>
+
+<section id="apps">
+  <div class="sec-head">
+    <p class="eyebrow">03 · Apps students already know</p>
+    <h2>Borrow the habits, not the features</h2>
+    <p>Students don't need training for patterns they already use daily. Each row maps a familiar habit to the place it lands in Clocktower.</p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>App</th><th>Habit students already have</th><th>Where it lands in Clocktower</th></tr></thead>
+      <tbody>
+        <tr><td>GPay / PhonePe</td><td>Pay any bill in two taps with UPI; receipts sit in a ledger</td><td>Wallet: fees, mess bills, fines in one list, UPI one-tap, mess autopay, receipts auto-saved</td></tr>
+        <tr><td>Swiggy / Zomato</td><td>Live order status with who has it and an ETA</td><td>Request tracker for leave, bonafide, re-eval, makeup, no-dues, hostel complaints</td></tr>
+        <tr><td>Instagram</td><td>Tap-through stories, seen/unseen rings, mute an account</td><td>Notices as stories by source (Dean, SWD, Dept, clubs), mute any club, important ones pinned</td></tr>
+        <tr><td>WhatsApp</td><td>Notifications you can act on; chat with a person, not a portal</td><td>Actionable alerts (Approve, Pay, View) and chat threads with SWD, warden or IC instead of email</td></tr>
+        <tr><td>Amazon cart</td><td>Add now, decide later, save for later</td><td>Course cart for next semester that is open all term, with alternates ranked</td></tr>
+        <tr><td>BookMyShow</td><td>See seats left before you choose; ticket as QR</td><td>Live seats per section; exam seating and fest passes as QR in Wallet</td></tr>
+        <tr><td>Google Calendar</td><td>Everything with a time shows in one calendar</td><td>Timetable, quizzes, midsem, compre and deadlines auto-synced, with one-tap export</td></tr>
+        <tr><td>DigiLocker</td><td>Verified documents ready to share</td><td>Pull 10th/12th and ID at admission; push bonafide, grade sheets and degree back</td></tr>
+        <tr><td>LinkedIn / Unstop</td><td>A profile that applies for you</td><td>Placement profile auto-filled from verified grades, projects and PS; one-tap applications</td></tr>
+        <tr><td>Splitwise</td><td>Shared costs settle without awkward math</td><td>Club and fest budgets, group event passes split among members</td></tr>
+        <tr><td>Spotify Wrapped</td><td>A shareable look back</td><td>Semester Wrap: courses done, credits, best grade, events attended (private by default)</td></tr>
+        <tr><td>Google Maps</td><td>Search a place, get walked there</td><td>Find any room (F102, LTC, NAB), prof's cabin or office, with opening hours</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="avoid">
+    <b>What we deliberately don't copy</b>
+    <span>Infinite feeds, streaks that guilt students about attendance, red badges for marketing, and ads. An ERP should be finished quickly so students can get back to their lives.</span>
+  </div>
+</section>
+
+<section id="ia">
+  <div class="sec-head">
+    <p class="eyebrow">04 · Information architecture</p>
+    <h2>Four tabs, one search, one inbox</h2>
+    <p>Navigation follows how students think ("what's on today", "my courses", "hostel stuff", "money"), not how the institute is organised into divisions.</p>
+  </div>
+  <div class="ia">
+    <div class="tabcard"><span class="k"><span class="dot"></span>Today</span><ul><li>Next class with room</li><li>Things that need you</li><li>Notice stories</li><li>Mess menu now</li></ul></div>
+    <div class="tabcard"><span class="k"><span class="dot" style="background:var(--marigold)"></span>Academics</span><ul><li>Courses, handouts, marks</li><li>Registration cart</li><li>Grades &amp; CGPA what-if</li><li>Projects, PS, minors</li></ul></div>
+    <div class="tabcard"><span class="k"><span class="dot" style="background:var(--good)"></span>Campus</span><ul><li>Leave &amp; gate pass</li><li>Mess, grub signups</li><li>Hostel complaints</li><li>Clubs, events, map</li></ul></div>
+    <div class="tabcard"><span class="k"><span class="dot" style="background:var(--bad)"></span>Wallet</span><ul><li>All dues in one list</li><li>UPI pay &amp; receipts</li><li>Scholarships</li><li>ID card &amp; passes (offline)</li></ul></div>
+    <div class="tabcard"><span class="k"><span class="dot" style="background:var(--muted)"></span>Always on top</span><ul><li>Search anything: "bonafide", "CS F364", "Meera Bhawan"</li><li>Inbox: requests + chats</li><li>Profile &amp; privacy</li></ul></div>
+  </div>
+</section>
+
+<section id="screens">
+  <div class="sec-head">
+    <p class="eyebrow">05 · Prototype</p>
+    <h2>Key screens, clickable</h2>
+    <p>The registration grid, compre calculator, wallet and PS ranking work. Names, marks and amounts are examples.</p>
+  </div>
+  <div class="proto">
+    <div class="phone-col">
+      <div class="screen-tabs" id="screenTabs" role="group" aria-label="Choose screen"></div>
+      <div class="phone">
+        <div class="scr">
+          <div class="statusbar"><span>9:42</span><span>BITS-WiFi ▲ 82%</span></div>
+
+          <!-- TODAY -->
+          <div class="view" data-view="today">
+            <div class="appbar"><h5>Hi, Aarav</h5><div class="icons"><span class="icon">⌕</span><span class="icon">✉<span class="badge">2</span></span></div></div>
+            <div class="stories">
+              <div class="story"><b>Dean</b>AUGSD</div>
+              <div class="story"><b>SWD</b>SWD</div>
+              <div class="story"><b>CSIS</b>Dept</div>
+              <div class="story"><b>ACM</b>Club</div>
+              <div class="story seen"><b>Lib</b>Library</div>
+              <div class="story seen"><b>NSS</b>Club</div>
+            </div>
+            <div class="card hero-card">
+              <div class="row"><span class="mini" style="color:#ffffffcc">NEXT · IN 18 MIN</span><span class="pill" style="background:#ffffff26;color:#fff">Lecture</span></div>
+              <b style="font-size:15px">CS F301 · Principles of Programming Languages</b>
+              <span class="sub">10:00–10:50 · F102 · L2</span>
+              <div class="row" style="margin-top:4px"><button class="btn light" type="button" style="flex:1">Directions</button><button class="btn light" type="button" style="flex:1">Handout</button></div>
+            </div>
+            <div class="banner"><b>Compre starts 4 Dec.</b> Seating plan is out. Your first paper: CS F301, 5 Dec, 9:00, LTC 5104.</div>
+            <p class="mini">NEEDS YOU · 3</p>
+            <div class="card"><div class="row"><b>December mess bill</b><span class="pill warn">Due 30 Nov</span></div><div class="row"><span class="sub">₹4,850 · Mess 2</span><button class="btn" type="button" data-go="wallet">Pay</button></div></div>
+            <div class="card"><div class="row"><b>Winter break leave</b><span class="pill info">Warden ✓</span></div><span class="sub">13 Dec → 2 Jan · waiting on SWD, usually same day</span></div>
+            <div class="card"><div class="row"><b>Sem II registration</b><span class="pill good">Cart open</span></div><span class="sub">Submit preferences by 8 Dec. No first-come rush.</span><button class="btn ghost" type="button" data-go="reg">Open cart</button></div>
+            <div class="card"><div class="row"><b>Mess now · Lunch</b><span class="mini">12:00–14:00</span></div><span class="sub">Rajma chawal, jeera aloo, roti, curd, kheer</span></div>
+          </div>
+
+          <!-- REGISTRATION -->
+          <div class="view" data-view="reg" hidden>
+            <div class="appbar"><h5>Sem II cart</h5><span class="pill good">Window: 2–8 Dec</span></div>
+            <p class="sub">Pick a section for each course. Clashes show the moment they happen.</p>
+            <div id="courses" style="display:flex;flex-direction:column;gap:6px"></div>
+            <div class="grid" id="ttgrid" aria-label="Weekly timetable preview"></div>
+            <div id="regStatus" class="status"></div>
+            <button class="btn" type="button" id="regSubmit">Submit preferences</button>
+          </div>
+
+          <!-- TRACKER -->
+          <div class="view" data-view="track" hidden>
+            <div class="appbar"><h5>Requests</h5><span class="icon">+</span></div>
+            <div class="card">
+              <div class="row"><b>Bonafide certificate</b><span class="pill info">In progress</span></div>
+              <span class="sub">For: passport application · Req #SWD-48213</span>
+              <div class="row" style="background:var(--accent-soft);border-radius:10px;padding:8px 10px"><span style="font-size:12px"><b>Ready by tomorrow, 4 PM</b><br><span class="sub">With: Mr. Sharma, SWD office</span></span><span class="big" style="font-size:18px;color:var(--accent)">~1d</span></div>
+              <ol class="steps">
+                <li class="done"><span class="b"></span><div><p>Requested</p><span>Mon 24 Nov, 11:02 · auto-filled from profile</span></div></li>
+                <li class="done"><span class="b"></span><div><p>Details verified</p><span>Mon 24 Nov, 15:40 · SWD</span></div></li>
+                <li class="now"><span class="b"></span><div><p>Awaiting signature</p><span>Associate Dean, SWD · usually 1 working day</span></div></li>
+                <li><span class="b"></span><div><p>Ready</p><span>Signed PDF in app + DigiLocker; paper copy optional</span></div></li>
+              </ol>
+              <div class="row"><button class="btn ghost" type="button" style="flex:1">Message SWD</button><button class="btn ghost" type="button" style="flex:1">Cancel</button></div>
+            </div>
+            <div class="card"><div class="row"><b>Fan not working · Room 2147</b><span class="pill good">Fixed</span></div><span class="sub">Raised with photo Fri · electrician visited Sat 10:15 · rate the fix</span></div>
+            <div class="card"><div class="row"><b>Makeup exam · MATH F211</b><span class="pill warn">IC reviewing</span></div><span class="sub">Medical certificate attached · decision due 28 Nov</span></div>
+          </div>
+
+          <!-- WALLET -->
+          <div class="view" data-view="wallet" hidden>
+            <div class="appbar"><h5>Wallet</h5><span class="icon">⧉</span></div>
+            <div class="card hero-card"><span class="mini" style="color:#ffffffcc">SELECTED TO PAY</span><span class="big" id="payTotal">₹0</span><span class="sub">UPI · Autopay for mess is off</span></div>
+            <div class="card" id="dues">
+              <label class="due"><input type="checkbox" id="d1" data-amt="4850" checked><span><b>Mess bill · December</b><br><span class="sub">Due 30 Nov</span></span><span class="amt">₹4,850</span></label>
+              <label class="due"><input type="checkbox" id="d2" data-amt="200"><span><b>Library late fee</b><br><span class="sub">2 books, 4 days</span></span><span class="amt">₹200</span></label>
+              <label class="due"><input type="checkbox" id="d3" data-amt="262500"><span><b>Semester II fee</b><br><span class="sub">Due 5 Jan · example amount</span></span><span class="amt">₹2,62,500</span></label>
+            </div>
+            <button class="btn" type="button" id="payBtn">Pay with UPI</button>
+            <div id="payMsg" class="status ok" hidden></div>
+            <p class="mini">RECENT</p>
+            <div class="card"><div class="row"><span>Mess bill · November</span><span class="amt">₹4,720</span></div><div class="row"><span class="sub">Paid 29 Oct · UPI</span><span class="pill good">Receipt</span></div></div>
+            <div class="card"><div class="row"><span>MCN scholarship</span><span class="pill info">Under review</span></div><span class="sub">Income docs verified · result by 15 Dec</span></div>
+          </div>
+
+          <!-- GRADES -->
+          <div class="view" data-view="grades" hidden>
+            <div class="appbar"><h5>Grades</h5><span class="pill info">CGPA 8.42</span></div>
+            <div class="card">
+              <span class="mini">SGPA BY SEMESTER</span>
+              <div class="bars"><div style="height:74%"><span>7.9</span></div><div style="height:82%"><span>8.3</span></div><div style="height:86%"><span>8.6</span></div><div style="height:84%"><span>8.5</span></div><div class="last" style="height:88%"><span>8.8</span></div></div>
+              <div class="glabels"><span>1-1</span><span>1-2</span><span>2-1</span><span>2-2</span><span>3-1*</span></div>
+              <span class="sub">*3-1 is projected from current marks</span>
+            </div>
+            <div class="card">
+              <div class="row"><b>What do I need in compre?</b></div>
+              <span class="sub">CS F301 · marks so far</span>
+              <div class="comp"><span>Assignments (20)</span><span>16</span><span>Midsem (35)</span><span>24</span><span>Compre (45)</span><span>?</span></div>
+              <span class="sub">Target grade</span>
+              <div class="targets" id="targets"></div>
+              <div id="need" class="status"></div>
+              <span class="sub">Uses last year's cutoffs shared by the IC (example). BITS grading is relative, so treat it as a guide.</span>
+            </div>
+          </div>
+
+          <!-- PS -->
+          <div class="view" data-view="ps" hidden>
+            <div class="appbar"><h5>PS-I stations</h5><span class="pill warn">Closes 12 Dec</span></div>
+            <p class="sub">Rank stations you'd accept. Allotment uses your rank and CGPA. No first-come advantage.</p>
+            <div id="psList" style="display:flex;flex-direction:column;gap:6px"></div>
+            <div class="card"><span class="mini">LAST YEAR AT YOUR TOP CHOICE</span><span style="font-size:12px">Lowest CGPA allotted: 8.1 · 14 seats · rated 4.3 by students</span></div>
+            <button class="btn" type="button">Save ranking</button>
+          </div>
+
+          <div class="tabbar" id="tabbar"><span data-t="today">Today</span><span data-t="acad">Academics</span><span data-t="campus">Campus</span><span data-t="wallet">Wallet</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes" id="notes">
+      <div class="note" data-note="today">
+        <p class="eyebrow">Today tab</p>
+        <h3>Opens to the answer, not a menu</h3>
+        <ul>
+          <li>The next class, its room and directions sit on top, so the most common question takes zero taps.</li>
+          <li>"Needs you" holds only items with a deadline or a pending decision. Everything else waits in its tab.</li>
+          <li>Notices are stories with a ring per source. Seen ones turn grey; any club can be muted.</li>
+          <li>During compre weeks the banner switches to your next paper and seat, and club notices go quiet.</li>
+        </ul>
+        <p class="from">Borrowed from <b>Instagram</b> (stories), <b>Google Calendar</b> (next up), <b>WhatsApp</b> (actionable alerts).</p>
+      </div>
+      <div class="note" data-note="reg" hidden>
+        <p class="eyebrow">Registration</p>
+        <h3>A cart instead of a race</h3>
+        <ul>
+          <li>The cart is open for weeks. Students plan whenever they want, so there is no load spike at opening minute.</li>
+          <li>Picking a section paints the week grid instantly. A clash turns red before you can submit it. Try switching CS F364 to L2.</li>
+          <li>Submissions in the window are allotted together by the existing priority rules (year, CGPA, core vs elective), then everyone is notified at once.</li>
+          <li>Add/drop happens in the same cart with live seat counts, not a separate form.</li>
+        </ul>
+        <p class="from">Borrowed from <b>Amazon</b> (cart), <b>BookMyShow</b> (seats left), and the lesson of <b>IRCTC Tatkal</b>: don't make people race a server.</p>
+      </div>
+      <div class="note" data-note="track" hidden>
+        <p class="eyebrow">Request tracker</p>
+        <h3>Every request shows who has it and when it moves</h3>
+        <ul>
+          <li>One tracker for leave, certificates, makeup, re-evaluation, complaints and no-dues.</li>
+          <li>Each step names the office or person holding it and the typical time, computed from past requests.</li>
+          <li>A stuck step past its usual time escalates automatically, so students don't have to chase.</li>
+          <li>Finished documents arrive as signed PDFs and go to DigiLocker.</li>
+        </ul>
+        <p class="from">Borrowed from <b>Swiggy / Zomato</b> (live order status), <b>DigiLocker</b> (verified documents).</p>
+      </div>
+      <div class="note" data-note="wallet" hidden>
+        <p class="eyebrow">Wallet</p>
+        <h3>All dues, one list, two taps</h3>
+        <ul>
+          <li>Fees, mess bills, library fines and event charges collected from every division into one list.</li>
+          <li>Select and pay with UPI. Receipts save automatically; parents can be given view access.</li>
+          <li>Optional autopay for the monthly mess bill.</li>
+          <li>The same tab holds the ID card and gate pass QR, which work offline.</li>
+        </ul>
+        <p class="from">Borrowed from <b>GPay / PhonePe</b> (UPI and ledger), <b>CRED</b> (calm due-date reminders).</p>
+      </div>
+      <div class="note" data-note="grades" hidden>
+        <p class="eyebrow">Grades</p>
+        <h3>Marks that tell you what to do next</h3>
+        <ul>
+          <li>Component marks from the LMS and final grades from the ERP finally live in one place.</li>
+          <li>The compre calculator answers the question every student asks in late November. Tap a target grade.</li>
+          <li>A CGPA what-if helps before branch transfer, dual-degree allotment and minor applications.</li>
+          <li>Early warnings go to the student and their advisor, never to a public list.</li>
+        </ul>
+        <p class="from">Borrowed from fitness apps (trend over time) and <b>Spotify Wrapped</b> for the end-of-semester summary.</p>
+      </div>
+      <div class="note" data-note="ps" hidden>
+        <p class="eyebrow">Practice School</p>
+        <h3>Rank with real information</h3>
+        <ul>
+          <li>Students rank stations with past cutoffs, seat counts and reviews from seniors who went there.</li>
+          <li>Reordering is direct. On phones, long-press and drag; here, use the arrows.</li>
+          <li>After allotment, the PS diary, mid-term evaluations and the final report all live in the same place.</li>
+        </ul>
+        <p class="from">Borrowed from <b>LinkedIn Jobs</b> and internship apps (role details, reviews).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="flows">
+  <div class="sec-head">
+    <p class="eyebrow">06 · Flow check</p>
+    <h2>Four journeys, before and after</h2>
+    <p>Step counts are design estimates for the student's side of each journey, used to judge the flows. They should be verified with real students during testing.</p>
+  </div>
+  <div class="flows">
+    <div class="flow">
+      <h3>Register for next semester</h3>
+      <div class="lane before"><span class="lab">Today</span><div class="stepchips"><span>Download timetable PDF</span><span>Plan in a sheet or student tool</span><span>Wait for your slot</span><span>Log in at the exact minute</span><span>Search each class</span><span>Hit a clash</span><span>Redo</span><span>Add/drop form later</span></div><span class="count">8<small>steps</small></span></div>
+      <div class="lane after"><span class="lab">Clocktower</span><div class="stepchips"><span>Build cart any time</span><span>Fix clashes live</span><span>Submit by deadline</span><span>Get allotment</span></div><span class="count">4<small>steps</small></span></div>
+    </div>
+    <div class="flow">
+      <h3>Go home for winter break</h3>
+      <div class="lane before"><span class="lab">Today</span><div class="stepchips"><span>Fill leave form on SWD portal</span><span>Get warden approval</span><span>Wait without status</span><span>Show proof at gate</span><span>Tell parents separately</span></div><span class="count">5<small>steps</small></span></div>
+      <div class="lane after"><span class="lab">Clocktower</span><div class="stepchips"><span>Tap Leave (dates prefilled from calendar)</span><span>Warden approves on phone</span><span>QR gate pass; parent notified</span></div><span class="count">3<small>steps</small></span></div>
+    </div>
+    <div class="flow">
+      <h3>Get a bonafide certificate</h3>
+      <div class="lane before"><span class="lab">Today</span><div class="stepchips"><span>Request on portal</span><span>Email to follow up</span><span>Visit office</span><span>Collect paper copy</span></div><span class="count">4<small>steps</small></span></div>
+      <div class="lane after"><span class="lab">Clocktower</span><div class="stepchips"><span>Request (auto-filled)</span><span>Watch tracker</span><span>Signed PDF in app</span></div><span class="count">3<small>steps</small></span></div>
+    </div>
+    <div class="flow">
+      <h3>Graduate (no-dues)</h3>
+      <div class="lane before"><span class="lab">Today</span><div class="stepchips"><span>Get no-dues form</span><span>Library</span><span>Hostel</span><span>Mess</span><span>Department</span><span>Lab</span><span>Accounts</span><span>Submit form</span></div><span class="count">8<small>stops</small></span></div>
+      <div class="lane after"><span class="lab">Clocktower</span><div class="stepchips"><span>System checks every division</span><span>Clear the real blockers only</span><span>Cleared; convocation RSVP</span></div><span class="count">3<small>steps</small></span></div>
+    </div>
+  </div>
+</section>
+
+<section id="roles">
+  <div class="sec-head">
+    <p class="eyebrow">07 · Everyone else in the loop</p>
+    <h2>Each role sees its own queue</h2>
+    <p>Student flows only get faster if the person on the other side can act in one tap too.</p>
+  </div>
+  <div class="roles">
+    <div class="role"><h3>Instructor-in-charge</h3><p>Publish the handout and evaluation plan once; upload marks per component; set grade cutoffs; approve makeup requests from a queue; message a whole section.</p></div>
+    <div class="role"><h3>Warden &amp; SWD</h3><p>Leave and certificate queues with one-tap approve; mess counts per day for kitchens; hostel complaints routed to the right staff with photos; overdue items flagged.</p></div>
+    <div class="role"><h3>AUGSD / ARC / Timetable</h3><p>Build the timetable and registration rules, run the preference-based allotment, see demand per course before sections are fixed, publish exam seating.</p></div>
+    <div class="role"><h3>PSD &amp; Placement Unit</h3><p>Post stations and companies, run allotment, collect PS evaluations, pull verified student profiles instead of re-collecting CVs and grade sheets.</p></div>
+    <div class="role"><h3>Parents</h3><p>Read-only and opt-in by the student: fee dues, leave travel dates, grades only if the student allows. Nothing else.</p></div>
+    <div class="role"><h3>Alumni</h3><p>Login stays after graduation for transcripts, degree verification for employers and universities, and the alumni directory.</p></div>
+  </div>
+</section>
+
+<section id="checks">
+  <div class="sec-head">
+    <p class="eyebrow">08 · Design checks</p>
+    <h2>The bar every flow has to clear</h2>
+    <p>These checks were applied to each screen above and should be re-run with students in usability tests each semester.</p>
+  </div>
+  <div class="checks">
+    <div class="check"><span class="tick">✓</span><p><b>Thumb reach.</b> Primary actions sit in the bottom half of the screen.</p></div>
+    <div class="check"><span class="tick">✓</span><p><b>Three-tap rule.</b> The top ten tasks finish in three taps or fewer from Today.</p></div>
+    <div class="check"><span class="tick">✓</span><p><b>No silent waits.</b> Every request shows status, owner and expected time.</p></div>
+    <div class="check"><span class="tick">✓</span><p><b>Works on bad Wi-Fi.</b> Timetable, ID card and gate pass are cached offline.</p></div>
+    <div class="check"><span class="tick">✓</span><p><b>No peak-load races.</b> Preference windows replace first-come slots.</p></div>
+    <div class="check"><span class="tick">✓</span><p><b>Accessible.</b> WCAG AA contrast in both themes, screen reader labels, large text support.</p></div>
+    <div class="check"><span class="tick">✓</span><p><b>Calm notifications.</b> Mute per source; quiet hours during midsem and compre.</p></div>
+    <div class="check"><span class="tick">✓</span><p><b>Student owns privacy.</b> Parent access and grade sharing are the student's choice.</p></div>
+    <div class="check"><span class="tick">✓</span><p><b>One identity.</b> BITS Google sign-in everywhere; no separate portal passwords.</p></div>
+  </div>
+  <h3 style="margin-top:8px">Top tasks and target taps from Today</h3>
+  <div class="taps">
+    <div class="tap">Check next class<b>0</b></div>
+    <div class="tap">See mess menu<b>0</b></div>
+    <div class="tap">Show ID card<b>1</b></div>
+    <div class="tap">Find a room or prof<b>1</b></div>
+    <div class="tap">Pay mess bill<b>2</b></div>
+    <div class="tap">Check marks<b>2</b></div>
+    <div class="tap">Apply for leave<b>3</b></div>
+    <div class="tap">Request bonafide<b>3</b></div>
+    <div class="tap">Raise hostel complaint<b>3</b></div>
+    <div class="tap">Read a notice<b>1</b></div>
+  </div>
+  <h3 style="margin-top:8px">How to roll it out without replacing the ERP on day one</h3>
+  <div class="phases">
+    <div class="phase"><b>Phase 1 · Read</b><p>Mobile app reads timetable, grades, dues and notices from the current systems through APIs.</p></div>
+    <div class="phase"><b>Phase 2 · Requests</b><p>Leave, certificates, complaints and the tracker move in, with warden and SWD queues.</p></div>
+    <div class="phase"><b>Phase 3 · Registration</b><p>Course cart and preference-based allotment, piloted with one year group first.</p></div>
+    <div class="phase"><b>Phase 4 · Career &amp; alumni</b><p>PS, placements, no-dues automation, DigiLocker and alumni access.</p></div>
+  </div>
+</section>
+
+<footer>Clocktower is a design concept for discussion. It is not affiliated with or endorsed by BITS Pilani. Student names, marks, amounts and timings in the prototype are illustrative.</footer>
+</div>
+
+<script>
+(function(){
+  /* ---------- theme switch (white by default) ---------- */
+  const root=document.documentElement,tbtn=document.getElementById("themeToggle"),tlab=document.getElementById("themeLabel");
+  function applyTheme(t){
+    root.setAttribute("data-theme",t);
+    tlab.textContent=t==="dark"?"Light mode":"Dark mode";
+    tbtn.setAttribute("aria-pressed",String(t==="dark"));
+    tbtn.setAttribute("aria-label","Switch to "+(t==="dark"?"light":"dark")+" theme");
+  }
+  let savedTheme=null;try{savedTheme=localStorage.getItem("clocktower-theme");}catch(e){}
+  applyTheme(savedTheme==="dark"?"dark":"light");
+  tbtn.addEventListener("click",()=>{
+    const next=root.getAttribute("data-theme")==="dark"?"light":"dark";
+    applyTheme(next);
+    try{localStorage.setItem("clocktower-theme",next);}catch(e){}
+  });
+
+  /* ---------- lifecycle ---------- */
+  const years=[
+    {y:"Year 0 · Admit",s:[0,1]},
+    {y:"Every semester",s:[2,3,4]},
+    {y:"All year",s:[5,6,7]},
+    {y:"End of Year 1",s:[8]},
+    {y:"Years 2–4",s:[9,10]},
+    {y:"Exit & after",s:[11]}
+  ];
+  const stages=[
+    {t:"Offer & admission",w:"May–Jul",today:"BITSAT results lead to an admission portal, fee by net-banking, and documents uploaded or emailed more than once across iteration lists.",now:"An onboarding checklist that reads like a checkout: accept offer, pay, pull documents from DigiLocker, rank hostel preferences, get your digital ID before you arrive.",apps:["DigiLocker","Swiggy checkout","GPay"]},
+    {t:"Arrival week",w:"August",today:"Queues for registration, ID, hostel and mess. The real information lives in seniors' WhatsApp groups.",now:"An arrival pass QR, a 'where next' list with the map, a senior buddy chat, mess choice and bank or SIM help, all from the phone.",apps:["Google Maps","Boarding pass","WhatsApp"]},
+    {t:"Course registration",w:"Nov & Apr",today:"Planning in PDFs and spreadsheets, a race when the ERP slot opens, clashes found after submitting, add/drop by form.",now:"A course cart open for weeks with live clash detection, ranked alternates, preference-based allotment by existing rules, and add/drop in the same cart.",apps:["Amazon cart","BookMyShow seats","Google Calendar"]},
+    {t:"Classes & evaluations",w:"Aug–Dec, Jan–May",today:"Handouts as PDFs, the LMS on a separate login, quiz and midsem dates in emails, marks without totals.",now:"Each course page holds the handout, evaluation plan, live marks and LMS posts. Exams, seating and deadlines sync to your calendar.",apps:["Google Calendar","Notion"]},
+    {t:"Grades & standing",w:"Dec & May",today:"Grades buried in ERP menus, CGPA worked out by hand, makeup and re-evaluation through forms and visits.",now:"A grade sheet with trends, a compre and CGPA what-if, makeup and re-eval requests in the tracker, and early private nudges with your advisor.",apps:["Spotify Wrapped","Fitness trends"]},
+    {t:"Hostel, mess & leave",w:"All year",today:"Leave forms needing warden sign-off, monthly mess changes on the SWD portal, complaints written in a register.",now:"Leave in three taps with a QR gate pass and parent alert, mess and grub signups with ratings, hostel complaints with a photo and live status.",apps:["Swiggy tracking","Zomato ratings","Uber ETA"]},
+    {t:"Money",w:"All year",today:"Fees, mess bills, fines and scholarship applications on different portals with separate receipts.",now:"One Wallet: every due in one list, UPI one-tap, optional mess autopay, saved receipts, MCN and merit scholarship status.",apps:["GPay / PhonePe","CRED reminders"]},
+    {t:"Clubs, fests & notices",w:"All year",today:"Email floods, WhatsApp forwards, recruitment through Google Forms, fest passes handled separately.",now:"Notices as stories by source with mute, club pages with recruitment built in, event RSVPs, and passes in the Wallet.",apps:["Instagram stories","BookMyShow tickets","Splitwise"]},
+    {t:"Branch, dual degree & minors",w:"End of 1-2",today:"Cutoff lists published as PDFs, minor applications by form, little sense of your odds.",now:"Past cutoffs in one view, a CGPA what-if, apply in the app and see your allotment with a reason.",apps:["College predictor apps"]},
+    {t:"Projects & Practice School",w:"2-2 summer → final sem",today:"SOP/LOP/DOP found by emailing professors; PS stations ranked on a separate PSD portal with little context.",now:"A project board where professors post and students apply, PS ranking with past cutoffs and reviews, and a PS-II diary in one place.",apps:["LinkedIn Jobs","Internship apps"]},
+    {t:"Placements & higher studies",w:"Years 3–4",today:"A separate placement portal, CV formats rebuilt each time, transcripts and LORs requested by email.",now:"A verified profile auto-filled from grades, projects and PS; one-tap applications; transcript and LOR requests in the tracker; interviews in your calendar.",apps:["LinkedIn","Unstop"]},
+    {t:"Graduation & alumni",w:"Final sem →",today:"A no-dues form signed across library, hostel, department and accounts; convocation and transcripts handled later by email.",now:"No-dues checked automatically with only real blockers shown, convocation RSVP, degree in DigiLocker, and an alumni login for transcripts and verification.",apps:["DigiLocker","Tax-filing checklists"]}
+  ];
+  const yearsEl=document.getElementById("years"), detail=document.getElementById("detail");
+  let current=2;
+  years.forEach(y=>{
+    const col=document.createElement("div");col.className="year";
+    col.innerHTML='<span class="year-label">'+y.y+'</span>';
+    y.s.forEach(i=>{
+      const b=document.createElement("button");b.type="button";b.className="stage";b.dataset.i=i;
+      b.innerHTML=stages[i].t+'<small>'+stages[i].w+'</small>';
+      b.addEventListener("click",()=>{current=i;renderStage();});
+      col.appendChild(b);
+    });
+    yearsEl.appendChild(col);
+  });
+  function renderStage(){
+    const s=stages[current];
+    yearsEl.querySelectorAll(".stage").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.i===current)));
+    detail.innerHTML='<div class="detail-title"><h3>'+s.t+'</h3><span class="eyebrow">'+s.w+'</span></div>'+
+      '<div class="t"><h4>Today</h4><p>'+s.today+'</p></div>'+
+      '<div class="n"><h4>In Clocktower</h4><p>'+s.now+'</p></div>'+
+      '<div class="b"><h4>Pattern borrowed from</h4><div class="chips">'+s.apps.map(a=>'<span class="chip">'+a+'</span>').join("")+'</div></div>';
+  }
+  renderStage();
+
+  /* ---------- screens ---------- */
+  const screens=[["today","Today","today"],["reg","Registration","acad"],["track","Tracker","campus"],["wallet","Wallet","wallet"],["grades","Grades","acad"],["ps","PS ranking","acad"]];
+  const tabsEl=document.getElementById("screenTabs");
+  screens.forEach(([id,label])=>{
+    const b=document.createElement("button");b.type="button";b.textContent=label;b.dataset.s=id;
+    b.addEventListener("click",()=>show(id));tabsEl.appendChild(b);
+  });
+  function show(id){
+    document.querySelectorAll(".view").forEach(v=>v.hidden=v.dataset.view!==id);
+    document.querySelectorAll(".note").forEach(n=>n.hidden=n.dataset.note!==id);
+    tabsEl.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.s===id)));
+    const tab=screens.find(s=>s[0]===id)[2];
+    document.querySelectorAll("#tabbar span").forEach(s=>s.classList.toggle("on",s.dataset.t===tab));
+  }
+  document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>show(b.dataset.go)));
+  show("today");
+
+  /* ---------- registration ---------- */
+  const days=["M","T","W","Th","F","S"];
+  const courses=[
+    {code:"CS F363",name:"Compiler Construction",secs:{L1:["M2","W2","F2"],L2:["T3","Th3","S3"]},seats:{L1:12,L2:31},pick:"L1"},
+    {code:"CS F364",name:"Design & Analysis of Algorithms",secs:{L1:["M2","W2","F2"],L2:["T4","Th4","S4"]},seats:{L1:5,L2:40},pick:"L1"},
+    {code:"CS F372",name:"Operating Systems",secs:{L1:["M4","W4","F4"],L2:["T2","Th2","S2"]},seats:{L1:22,L2:18},pick:"L1"},
+    {code:"HSS",name:"Humanities elective",secs:{L1:["T4","Th4"],L2:["M5","W5"]},seats:{L1:9,L2:26},pick:"L1"}
+  ];
+  const colors=["#5B5FE0","#D9822B","#2E9C6A","#B04FA8"];
+  const coursesEl=document.getElementById("courses"),grid=document.getElementById("ttgrid"),st=document.getElementById("regStatus");
+  function renderReg(){
+    coursesEl.innerHTML="";
+    courses.forEach((c,ci)=>{
+      const d=document.createElement("div");d.className="course";
+      d.innerHTML='<div class="row"><b><span class="sw c'+ci+'"></span>'+c.code+'</b><span class="mini">'+c.seats[c.pick]+' seats left</span></div><span class="sub">'+c.name+'</span>';
+      const s=document.createElement("div");s.className="secs";
+      Object.keys(c.secs).forEach(k=>{
+        const b=document.createElement("button");b.type="button";b.textContent=k+" · "+c.secs[k].join(" ");
+        b.setAttribute("aria-pressed",String(c.pick===k));
+        if(c.pick===k)b.style.background=colors[ci];
+        b.addEventListener("click",()=>{c.pick=k;renderReg();});
+        s.appendChild(b);
+      });
+      d.appendChild(s);coursesEl.appendChild(d);
+    });
+    const occ={};
+    courses.forEach((c,ci)=>c.secs[c.pick].forEach(slot=>{(occ[slot]=occ[slot]||[]).push(ci);}));
+    let html='<div></div>'+days.map(d=>'<div>'+d+'</div>').join("");
+    for(let h=1;h<=6;h++){
+      html+='<div>'+h+'</div>';
+      days.forEach(d=>{
+        const o=occ[d+h];
+        if(!o)html+='<div class="cell"></div>';
+        else if(o.length>1)html+='<div class="cell clash">!</div>';
+        else html+='<div class="cell c'+o[0]+'">'+courses[o[0]].code.split(" ").pop()+'</div>';
+      });
+    }
+    grid.innerHTML=html;
+    const clashes=Object.entries(occ).filter(([k,v])=>v.length>1);
+    if(clashes.length){
+      const pair=[...new Set(clashes.flatMap(([k,v])=>v))].map(i=>courses[i].code);
+      st.className="status no";st.textContent="Clash: "+pair.join(" and ")+" at "+clashes.map(c=>c[0]).join(", ")+". Switch a section to submit.";
+      document.getElementById("regSubmit").disabled=true;document.getElementById("regSubmit").style.opacity=.5;
+    }else{
+      st.className="status ok";st.textContent="No clashes. 4 courses · 14 units. Ready to submit.";
+      document.getElementById("regSubmit").disabled=false;document.getElementById("regSubmit").style.opacity=1;
+    }
+  }
+  document.getElementById("regSubmit").addEventListener("click",()=>{st.className="status ok";st.textContent="Preferences saved (demo). Allotment results on 10 Dec.";});
+  renderReg();
+
+  /* ---------- wallet ---------- */
+  const fmt=n=>"₹"+n.toLocaleString("en-IN");
+  const boxes=[...document.querySelectorAll("#dues input")];
+  function total(){const t=boxes.filter(b=>b.checked).reduce((a,b)=>a+ +b.dataset.amt,0);document.getElementById("payTotal").textContent=fmt(t);return t;}
+  boxes.forEach(b=>b.addEventListener("change",()=>{total();document.getElementById("payMsg").hidden=true;}));
+  document.getElementById("payBtn").addEventListener("click",()=>{
+    const t=total(),m=document.getElementById("payMsg");m.hidden=false;
+    if(!t){m.className="status no";m.textContent="Select at least one due to pay.";return;}
+    m.className="status ok";m.textContent="Demo only: "+fmt(t)+" would open your UPI app. Receipt saves here after payment.";
+  });
+  total();
+
+  /* ---------- grades ---------- */
+  const cut={"A":78,"A-":70,"B":62,"B-":55,"C":48};let tgt="A-";
+  const tg=document.getElementById("targets"),need=document.getElementById("need");
+  function renderNeed(){
+    tg.innerHTML="";
+    Object.keys(cut).forEach(k=>{const b=document.createElement("button");b.type="button";b.textContent=k;b.setAttribute("aria-pressed",String(k===tgt));b.addEventListener("click",()=>{tgt=k;renderNeed();});tg.appendChild(b);});
+    const n=cut[tgt]-40;
+    if(n>45){need.className="status no";need.textContent="Not reachable this time: you'd need "+n+"/45.";}
+    else if(n<=0){need.className="status ok";need.textContent="Already there on current marks.";}
+    else{need.className=n>36?"status no":"status ok";need.textContent="You need about "+n+" / 45 in compre ("+Math.round(n/45*100)+"%) for "+tgt+".";}
+  }
+  renderNeed();
+
+  /* ---------- PS ---------- */
+  const ps=[["Bengaluru","Fintech · backend",14],["Hyderabad","Semiconductor · verification",8],["Pune","Automotive · embedded",10],["Gurugram","E-commerce · data",12],["Pilani","CEERI · research lab",6]];
+  const psEl=document.getElementById("psList");
+  function renderPS(){
+    psEl.innerHTML="";
+    ps.forEach((p,i)=>{
+      const d=document.createElement("div");d.className="rank";
+      d.innerHTML='<span class="n">'+(i+1)+'</span><span><b style="font-size:12.5px">'+p[0]+'</b><br><span class="sub">'+p[1]+' · '+p[2]+' seats</span></span>';
+      const mv=document.createElement("div");mv.className="mv";
+      [["▲",-1,"Move up"],["▼",1,"Move down"]].forEach(([s,dir,l])=>{
+        const b=document.createElement("button");b.type="button";b.textContent=s;b.setAttribute("aria-label",l+" "+p[0]);
+        b.disabled=(i+dir<0||i+dir>=ps.length);if(b.disabled)b.style.opacity=.3;
+        b.addEventListener("click",()=>{const j=i+dir;[ps[i],ps[j]]=[ps[j],ps[i]];renderPS();});
+        mv.appendChild(b);
+      });
+      d.appendChild(mv);psEl.appendChild(d);
+    });
+  }
+  renderPS();
+})();
+</script>
+
+</body>
+</html>
